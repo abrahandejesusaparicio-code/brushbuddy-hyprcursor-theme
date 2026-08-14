@@ -114,3 +114,45 @@ in-between size (48px tested) produced a cursor visually *smaller* than the
 smaller of the two variants. Exact cause unconfirmed — mitigated, not fixed,
 by providing explicit intermediate raster sizes instead of relying on
 interpolation across a wide size gap.
+
+**Correction:** further testing (40px, between the close 32/48 anchors)
+showed `resize_algorithm = bilinear` doesn't interpolate at all on this
+hyprcursor version, not even across narrow gaps — it just silently snaps to
+the nearest smaller defined size. Only request sizes with an exact
+`define_size` entry.
+
+## v0.8 — installer, uninstaller, precompiled release
+Added `install.sh` / `uninstall.sh` so installing no longer requires knowing
+what UWSM, GTK settings.ini, gsettings, or `hyprctl setcursor` even are.
+`release/Brushbuddy-Bibata/` ships the precompiled theme so end users never
+need `hyprcursor-util`, Python, or Pillow — those stay dev-only, for
+rebuilding from `working-state/` via `tools/`.
+
+`install.sh`:
+- Detects Hyprland/GTK/UWSM/gsettings/Flatpak and reports what it found
+- Backs up current cursor settings before changing anything
+- Interactive size wizard that **waits for explicit per-size confirmation**
+  (y/bigger/smaller/list/quit) instead of auto-advancing through sizes —
+  each candidate is applied live with a mouse-movement reminder before
+  asking
+- `--size`/`--no-gtk`/`--dry-run`/`--flatpak-support` flags for non-wizard use
+
+`uninstall.sh` restores whatever was active before install and removes the
+Brushbuddy theme files.
+
+**Bug found and fixed during testing:** running `install.sh` a second time
+(e.g. to pick a different size) while Brushbuddy was already installed
+captured "Brushbuddy-Bibata" itself as the "previous" theme to restore to.
+Running `uninstall.sh` afterward then restored config to point at
+Brushbuddy-Bibata *and* deleted the Brushbuddy-Bibata directory in the same
+run — a dangling theme reference, cursor left broken. Reproduced directly:
+ran the installer twice, then uninstalled, confirmed the config pointed at a
+now-deleted directory. Fixed two ways: `install.sh` now detects an existing
+non-self-referential backup and reuses it instead of overwriting (so the
+*true* original survives any number of resizes), and `uninstall.sh` refuses
+to delete the theme directory if the recorded "previous" theme is Brushbuddy
+itself (belt-and-suspenders, in case the backup chain breaks some other
+way). Verified fixed with a full round-trip test: simulated a genuine
+pre-Brushbuddy backup, resized via `--size 48`, confirmed the original
+backup survived untouched, then uninstalled and confirmed correct restore
+with no dangling reference.

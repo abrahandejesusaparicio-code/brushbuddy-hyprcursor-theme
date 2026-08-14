@@ -1,0 +1,23 @@
+Brushbuddy source inspection
+============================
+
+ANI files:
+- classic: 7 embedded frames, 256x256, default JifRate=7, converted delays=[117] ms
+  embedded record type(s)=[2] (2 = CUR), embedded field1/field2=[(0, 0)]
+- pointer: 2 embedded frames, 256x256, default JifRate=5, converted delays=[83] ms
+  embedded record type(s)=[2] (2 = CUR), embedded field1/field2=[(0, 0)]
+- wait: 46 embedded frames, 256x256, default JifRate=5, converted delays=[83] ms
+  embedded record type(s)=[2] (2 = CUR), embedded field1/field2=[(0, 0)]
+
+Static files:
+- classic: header type=1 (1 = ICO), count=1, field1=1, field2=32 (planes/bitcount in ICO, not CUR hotspot)
+- pointer: header type=1 (1 = ICO), count=1, field1=1, field2=32 (planes/bitcount in ICO, not CUR hotspot)
+- wait: header type=1 (1 = ICO), count=1, field1=1, field2=32 (planes/bitcount in ICO, not CUR hotspot)
+
+Hotspot policy in this kit:
+- classic/default starts at pixel (36,18) => normalized (0.140625, 0.0703125)
+- link/pointer starts at pixel (62,16) => normalized (0.2421875, 0.0625)
+- wait/loading starts centered => normalized (0.5, 0.5)
+
+Those hotspot values are VISUAL STARTING GUESSES, not recovered source metadata.
+The source metadata does not contain trustworthy hotspots.

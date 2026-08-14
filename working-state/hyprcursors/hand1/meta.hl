@@ -1,0 +1,9 @@
+resize_algorithm = bilinear
+hotspot_x = 0.2421875
+hotspot_y = 0.0625
+define_override = grab
+define_override = openhand
+define_size = 24, frame_24_000.png, 83
+define_size = 24, frame_24_001.png, 83
+define_size = 256, frame_256_000.png, 83
+define_size = 256, frame_256_001.png, 83

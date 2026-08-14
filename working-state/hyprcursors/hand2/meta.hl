@@ -1,0 +1,11 @@
+resize_algorithm = bilinear
+hotspot_x = 0.2421875
+hotspot_y = 0.0625
+define_override = 9d800788f1b08800ae810202380a0822
+define_override = e29285e634086352946a0e7090d73106
+define_override = pointer
+define_override = pointing_hand
+define_size = 24, frame_24_000.png, 83
+define_size = 24, frame_24_001.png, 83
+define_size = 256, frame_256_000.png, 83
+define_size = 256, frame_256_001.png, 83

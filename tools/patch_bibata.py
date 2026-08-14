@@ -36,9 +36,9 @@ ALIASES = {
     "wait": {"wait","watch","progress","left_ptr_watch","half-busy"},
 }
 HOTSPOTS = {
-    "classic": ("0.140625","0.0703125"),
-    "pointer": ("0.2421875","0.0625"),
-    "resize_pointer": ("0.2421875","0.0625"),
+    "classic": ("0.4688","0.4063"),
+    "pointer": ("0.4570","0.3906"),
+    "resize_pointer": ("0.4570","0.3906"),
     "wait": ("0.5","0.5"),
 }
 DELAYS = {"classic":117, "pointer":83, "resize_pointer":83, "wait":83}

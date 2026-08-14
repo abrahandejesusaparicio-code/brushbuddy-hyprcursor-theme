@@ -1,9 +1,9 @@
 resize_algorithm = bilinear
 hotspot_x = 0.4570
 hotspot_y = 0.3906
-define_override = 3085a0e285430894940527032f8b26df
-define_override = 640fb0e74195791501fd1ed57b41487f
-define_override = a2a266d0498c3104214a47bd64ab0fc8
+define_override = fcf1c3c7cd4491d801f1e1c78f100000
+define_override = nesw-resize
+define_override = size_bdiag
 define_size = 24, frame_24_000.png, 83
 define_size = 24, frame_24_001.png, 83
 define_size = 256, frame_256_000.png, 83

@@ -49,9 +49,24 @@ changed, compiled (56 shapes total), installed permanently (uwsm env, GTK
 `hyprctl setcursor`), confirmed working end-to-end on the real desktop.
 Leftover probe themes and the broken v0.2 build cleaned up.
 
-## Planned — v0.6
-Extend the pointer animation to the 12 resize-direction cursor shapes
-(`n-resize` through `nwse-resize`/`col-resize`/`row-resize`) so resizing a
-window shows the same hand animation as hovering a link. Mapping of all 12
-Bibata directories to their CSS resize names already documented in
-`docs/FORMAT_NOTES.md`; not yet built.
+## v0.6 — resize cursors + hotspot fix
+Extended the pointer animation to all 12 resize-direction shapes (`top_side`,
+`bottom_side`, `left_side`, `right_side`, all 4 corners,
+`fd_double_arrow`/`bd_double_arrow`, `sb_h_double_arrow`/`sb_v_double_arrow`),
+via a new `resize_pointer` category in `patch_bibata.py` that reuses the
+existing 2-frame pointer source frames (no new art needed) rather than
+mixing them into the `pointer` category directly. Deliberate visual
+tradeoff, confirmed intentional: all resize directions now show the same
+animation, directional distinction is gone (Hyprland still knows which
+resize operation is happening semantically — only the on-screen cursor
+shape lost the distinction). Patched 18 total shapes (6 from v0.5 + 12 new),
+diffed clean against the untouched Bibata source, compiled (56 shapes),
+installed in place over the existing `Brushbuddy-Bibata` theme.
+
+Also fixed the hotspots: the original bounding-box-corner guess placed the
+click point at the tip of the witch hat (default) / tip of a raised paw
+(pointer) — technically inside the artwork, but a tiny, awkward target far
+from where the eye naturally aims. Moved to the midpoint between the
+character's two eyes for both `default` and the `pointer` family (which the
+12 resize shapes inherit), confirmed by visual crosshair overlay + live
+click/hover testing to feel natural.

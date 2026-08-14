@@ -6,10 +6,11 @@ only the default pointer, link/hand pointer, and busy/wait cursors are replaced
 — everything else (resize handles, text cursor, crosshair, etc.) stays exactly
 as Bibata ships it.
 
-**Status: v0.5** — default, pointer, and wait animations confirmed working and
-installed live on the target machine (Sentinel-home, Hyprland 0.56.2,
-hyprcursor 0.1.13). Resize-direction cursors (12 additional shapes) are the
-next planned addition — see `docs/CHANGELOG.md`.
+**Status: v0.6** — default, pointer, wait, and all 12 resize-direction
+cursors confirmed working and installed live on the target machine
+(Sentinel-home, Hyprland 0.56.2, hyprcursor 0.1.13). Hotspots tuned to the
+midpoint between the character's eyes (was the hat tip / paw tip — technically
+correct but an awkward, hard-to-aim click target) — see `docs/CHANGELOG.md`.
 
 This repo is documentation + source, not a redistribution of Bibata. To build
 the full merged theme you need your own local Bibata-Modern-Ice install and

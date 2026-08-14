@@ -1,6 +1,6 @@
 resize_algorithm = bilinear
-hotspot_x = 0.140625
-hotspot_y = 0.0703125
+hotspot_x = 0.4688
+hotspot_y = 0.4063
 define_override = arrow
 define_override = default
 define_override = top_left_arrow

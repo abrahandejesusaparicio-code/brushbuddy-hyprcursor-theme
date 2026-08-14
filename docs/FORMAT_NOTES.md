@@ -74,11 +74,19 @@ warning about this before every switch.
   (`type=2`), but every single embedded frame reports hotspot `(0,0)` — not
   usable data either.
 - Net effect: **no source file in this pack carries a usable authored
-  hotspot.** All hotspot values in `working-state/*/meta.hl` are visual
-  starting guesses based on each shape's alpha-channel bounding box (top-left
-  corner for the default/pointer shapes, centered for the wait/spinner
-  shape), confirmed clickable/hoverable in live testing but not refined
-  further.
+  hotspot.** Initial hotspot values (v0.3-v0.5) were alpha-channel
+  bounding-box guesses (top-left corner for default/pointer, centered for
+  wait). These technically worked (clickable/hoverable) but felt bad in
+  practice — the click point sat at the tip of the witch hat / tip of a
+  raised paw, a tiny target far from where the eye naturally aims. v0.6
+  moved `default` and the `pointer` family to the midpoint between the
+  character's two eyes instead (`hotspot_x ≈ 0.457-0.469, hotspot_y ≈
+  0.391-0.406` depending on shape), confirmed via a crosshair-overlay
+  screenshot sent back for visual approval before rebuilding, then live
+  click/hover tested. `wait` stays centered (`0.5, 0.5`) — no complaint
+  there since it's not a click target. If you retune hotspots again, this
+  "screenshot a crosshair overlay for approval before rebuilding" loop is
+  faster than guessing blind.
 - Frame counts/timing (from `docs/FACTCHECK.txt`): default/classic 7 frames
   @ 117ms, pointer/link 2 frames @ 83ms, wait/loading 46 frames @ 83ms.
 
@@ -94,7 +102,10 @@ hashed KDE/GNOME cursor-spec aliases like
 `08e8e1c95fe2fc01f976f1e063a24ccd` that get preserved automatically since the
 patcher copies whatever overrides already exist on the matched directory).
 
-Resize-direction cursors are a separate, not-yet-patched set of 12
-directories, each with a CSS-style `define_override` (`n-resize`,
-`nesw-resize`, `col-resize`, etc.) — mapping documented for the v0.6 pass but
-not yet built as of v0.5.
+Resize-direction cursors (12 directories, each with a CSS-style
+`define_override` like `n-resize`/`nesw-resize`/`col-resize`) are patched as
+of v0.6 via a separate `resize_pointer` category in `patch_bibata.py` that
+maps to the same source frames as `pointer` (`SOURCE_KIND` dict) but keeps
+its own alias set — so the 12 resize directories don't get mixed into the
+`pointer` category's detection logic, even though they end up using
+identical art.

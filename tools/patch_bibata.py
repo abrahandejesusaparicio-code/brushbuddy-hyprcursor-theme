@@ -19,15 +19,36 @@ EXTRACTED = KIT / "extracted"
 ALIASES = {
     "classic": {"left_ptr","default","arrow","top_left_arrow"},
     "pointer": {"pointer","hand","hand1","hand2","link","pointing_hand"},
+    "resize_pointer": {
+        "top_side",
+        "bottom_side",
+        "left_side",
+        "right_side",
+        "top_left_corner",
+        "top_right_corner",
+        "bottom_left_corner",
+        "bottom_right_corner",
+        "fd_double_arrow",
+        "bd_double_arrow",
+        "sb_h_double_arrow",
+        "sb_v_double_arrow",
+    },
     "wait": {"wait","watch","progress","left_ptr_watch","half-busy"},
 }
 HOTSPOTS = {
     "classic": ("0.140625","0.0703125"),
     "pointer": ("0.2421875","0.0625"),
+    "resize_pointer": ("0.2421875","0.0625"),
     "wait": ("0.5","0.5"),
 }
-DELAYS = {"classic":117, "pointer":83, "wait":83}
-FRAME_COUNTS = {"classic":7, "pointer":2, "wait":46}
+DELAYS = {"classic":117, "pointer":83, "resize_pointer":83, "wait":83}
+FRAME_COUNTS = {"classic":7, "pointer":2, "resize_pointer":2, "wait":46}
+SOURCE_KIND = {
+    "classic": "classic",
+    "pointer": "pointer",
+    "resize_pointer": "pointer",
+    "wait": "wait",
+}
 
 def value(line):
     return line.split("=",1)[1].split("#",1)[0].strip()
@@ -78,7 +99,7 @@ def write_brushbuddy_shape(target, kind, overrides):
     # Repeated entries of one size are animation frames.
     for size in (24,256):
         for i in range(FRAME_COUNTS[kind]):
-            src=EXTRACTED/kind/f"frame_{i:03d}.png"
+            src=EXTRACTED/SOURCE_KIND[kind]/f"frame_{i:03d}.png"
             fn=f"frame_{size}_{i:03d}.png"
             dst=target/fn
             if size == 24:
@@ -106,7 +127,7 @@ shapes_root=src/cdir
 if not shapes_root.is_dir():
     raise SystemExit(f"Missing cursor directory: {shapes_root}")
 
-matches={"classic":[],"pointer":[],"wait":[]}
+matches={"classic":[],"pointer":[],"resize_pointer":[],"wait":[]}
 conflicts=[]
 print(f"Bibata source: {src}")
 print(f"cursors_directory: {cdir}")
@@ -132,7 +153,13 @@ if conflicts:
 if not args.apply:
     print("\nDry run only.")
     print("Claude/Ace: verify these matches against the extracted working Bibata tree.")
-    print("If correct, re-run with --apply and an output path.")
+    print()
+    print("IMPORTANT VISUAL TRADEOFF:")
+    print("  All 12 resize directions matched as 'resize_pointer' will use the SAME")
+    print("  2-frame Brushbuddy hand animation. Horizontal/vertical/diagonal resize")
+    print("  directions will no longer be visually distinguishable by cursor shape.")
+    print()
+    print("If correct and intentional, re-run with --apply and an output path.")
     sys.exit(0)
 
 if args.output is None:

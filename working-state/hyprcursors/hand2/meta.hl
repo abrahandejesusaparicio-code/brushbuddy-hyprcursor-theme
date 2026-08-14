@@ -1,6 +1,6 @@
 resize_algorithm = bilinear
-hotspot_x = 0.2421875
-hotspot_y = 0.0625
+hotspot_x = 0.4570
+hotspot_y = 0.3906
 define_override = 9d800788f1b08800ae810202380a0822
 define_override = e29285e634086352946a0e7090d73106
 define_override = pointer

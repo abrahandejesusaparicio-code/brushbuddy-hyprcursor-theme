@@ -1,0 +1,15 @@
+resize_algorithm = bilinear
+hotspot_x = 0.4570
+hotspot_y = 0.3906
+define_override = 028006030e0e7ebffc7f7070c0600140
+define_override = 14fef782d02440884392942c1120523
+define_override = col-resize
+define_override = ew-resize
+define_override = h_double_arrow
+define_override = size-hor
+define_override = size_hor
+define_override = split_h
+define_size = 24, frame_24_000.png, 83
+define_size = 24, frame_24_001.png, 83
+define_size = 256, frame_256_000.png, 83
+define_size = 256, frame_256_001.png, 83

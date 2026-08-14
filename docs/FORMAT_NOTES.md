@@ -56,13 +56,19 @@ combination that was proven live on this machine's single 1x-scale display.
 once someone actually requested a size other than 24. Requesting 48px with
 only 24px+256px anchors defined produced a cursor *smaller* than 24px, not
 bigger — reproduced twice live with mouse movement controlled for, so not a
-redraw-trap false negative. The gap between 24 and 256 (≈10.7x) appears too
-wide for `resize_algorithm = bilinear` to interpolate sanely on hyprcursor
-0.1.13. Fix was the same category of fix as the original bug: stop trusting
-interpolation, add more exact anchors. Every shape now declares six sizes —
-24/32/48/64/96/256px — and interpolation between *adjacent, close* anchors
-(tested: 40px between the 32 and 48 anchors) works fine. It's specifically
-wide gaps between anchors that seem to break.
+redraw-trap false negative. Fix was the same category of fix as the original
+bug: stop trusting interpolation, add more exact anchors. Every shape now
+declares six sizes — 24/32/48/64/96/256px.
+
+**`resize_algorithm = bilinear` does not appear to actually interpolate at
+all on this hyprcursor version**, close anchors or not. Live-tested 40px
+(sitting between the 32 and 48 anchors, a narrow ~1.5x gap) and it rendered
+at the exact same size as 32px — not scaled up, not blank, just silently
+snapped to the nearest smaller defined anchor. So the earlier theory ("wide
+gaps break, narrow gaps interpolate fine") is wrong; the honest, tested
+conclusion is: **only request a size that has an exact `define_size` entry.
+Don't rely on `resize_algorithm` to do real scaling for anything in
+between**, regardless of how close the surrounding anchors are.
 
 ## The mouse-redraw trap (caused a lot of false debugging)
 

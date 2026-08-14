@@ -86,10 +86,14 @@ diagnosis is described, not proven.
 Fix: stopped relying on interpolation across a wide gap entirely. Every
 Brushbuddy shape now gets six explicit raster anchors — 24/32/48/64/96/256px,
 pre-rendered from the 256px master via Pillow LANCZOS downscale — so any
-commonly-requested size has an exact or near match. `bilinear` remains set
-as the fallback for odd in-between sizes (e.g. 40px, confirmed working live
-between the close 32/48 anchors — small gaps interpolate fine, it's the wide
-ones that broke).
+commonly-requested size has an exact or near match. `bilinear` is still set
+as the nominal fallback for odd in-between sizes, but that fallback is
+**not actually confirmed to scale**: live-tested 40px (between the 32 and 48
+anchors) and it rendered at the same size as 32px, not scaled up toward 48.
+No crash, no invisible cursor — just silently snapped to the nearest
+defined anchor instead of interpolating. Practical takeaway: don't rely on
+`resize_algorithm` doing real scaling at all on this hyprcursor version —
+only request sizes that have an exact `define_size` entry.
 
 Also fixed `validate_theme.py`'s scope bug from v0.5/v0.6 (it required the
 full size ladder on *every* shape in the tree, including untouched native

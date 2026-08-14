@@ -2,10 +2,11 @@
 """
 Create a PATCHED COPY of an extracted Bibata hyprcursor working-state tree.
 
-V2 policy established on Ace's machine:
-- keep only the five proven meta.hl keys
-- provide an exact 24px raster AND the original 256px raster
-- preserve Bibata's existing directory names and define_override aliases
+V5 policy:
+- preserve the five proven meta.hl keys
+- provide explicit raster anchors at 24/32/48/64/96/256
+- preserve Bibata directory names and define_override aliases
+- patch classic, pointer, wait, and 12 resize-pointer shapes
 - never modify the input tree
 - dry-run by default
 """
@@ -35,12 +36,14 @@ ALIASES = {
     },
     "wait": {"wait","watch","progress","left_ptr_watch","half-busy"},
 }
+
 HOTSPOTS = {
     "classic": ("0.4688","0.4063"),
     "pointer": ("0.4570","0.3906"),
     "resize_pointer": ("0.4570","0.3906"),
     "wait": ("0.5","0.5"),
 }
+
 DELAYS = {"classic":117, "pointer":83, "resize_pointer":83, "wait":83}
 FRAME_COUNTS = {"classic":7, "pointer":2, "resize_pointer":2, "wait":46}
 SOURCE_KIND = {
@@ -49,6 +52,7 @@ SOURCE_KIND = {
     "resize_pointer": "pointer",
     "wait": "wait",
 }
+SIZES = (24,32,48,64,96,256)
 
 def value(line):
     return line.split("=",1)[1].split("#",1)[0].strip()
@@ -77,12 +81,14 @@ def classify(shape):
     hits={k:sorted(names & aliases) for k,aliases in ALIASES.items() if names & aliases}
     return names,hits
 
-def make24(src,dst):
+def make_size(src,dst,size):
+    if size == 256:
+        shutil.copy2(src,dst)
+        return
     with Image.open(src) as im:
-        im.convert("RGBA").resize((24,24), Image.Resampling.LANCZOS).save(dst,"PNG")
+        im.convert("RGBA").resize((size,size), Image.Resampling.LANCZOS).save(dst,"PNG")
 
 def write_brushbuddy_shape(target, kind, overrides):
-    # Preserve meta only until we replace it; remove raster assets in this matched shape.
     for f in list(target.iterdir()):
         if f.is_file() and f.name != "meta.hl" and f.suffix.lower() in {".png",".svg",".webp"}:
             f.unlink()
@@ -95,17 +101,13 @@ def write_brushbuddy_shape(target, kind, overrides):
     for o in overrides:
         lines.append(f"define_override = {o}")
 
-    # 24px exact match first, then 256px original source.
-    # Repeated entries of one size are animation frames.
-    for size in (24,256):
+    source_kind=SOURCE_KIND[kind]
+    for size in SIZES:
         for i in range(FRAME_COUNTS[kind]):
-            src=EXTRACTED/SOURCE_KIND[kind]/f"frame_{i:03d}.png"
+            src=EXTRACTED/source_kind/f"frame_{i:03d}.png"
             fn=f"frame_{size}_{i:03d}.png"
             dst=target/fn
-            if size == 24:
-                make24(src,dst)
-            else:
-                shutil.copy2(src,dst)
+            make_size(src,dst,size)
             lines.append(f"define_size = {size}, {fn}, {DELAYS[kind]}")
 
     (target/"meta.hl").write_text("\n".join(lines)+"\n")
@@ -132,13 +134,14 @@ conflicts=[]
 print(f"Bibata source: {src}")
 print(f"cursors_directory: {cdir}")
 print("\nDetection:")
+
 for shape in sorted((p for p in shapes_root.iterdir() if p.is_dir()), key=lambda p:p.name):
     names,hits=classify(shape)
     if len(hits)>1:
         conflicts.append((shape,hits))
     for k in hits:
         matches[k].append(shape)
-        print(f"  {k:7s} <- {shape.name:30s} via {', '.join(hits[k])}")
+        print(f"  {k:14s} <- {shape.name:30s} via {', '.join(hits[k])}")
 
 for k in matches:
     if not matches[k]:
@@ -150,16 +153,15 @@ if conflicts:
         print(" ",shape.name,hits)
     sys.exit(2)
 
+print("\nSummary:")
+for k in ("classic","pointer","resize_pointer","wait"):
+    print(f"  {k:14s}: {len(matches[k])} shape(s)")
+
 if not args.apply:
     print("\nDry run only.")
-    print("Claude/Ace: verify these matches against the extracted working Bibata tree.")
-    print()
-    print("IMPORTANT VISUAL TRADEOFF:")
-    print("  All 12 resize directions matched as 'resize_pointer' will use the SAME")
-    print("  2-frame Brushbuddy hand animation. Horizontal/vertical/diagonal resize")
-    print("  directions will no longer be visually distinguishable by cursor shape.")
-    print()
-    print("If correct and intentional, re-run with --apply and an output path.")
+    print("Verify the exact match set against the extracted Bibata tree.")
+    print("Resize directions intentionally share one Brushbuddy animation.")
+    print("Raster ladder: 24/32/48/64/96/256.")
     sys.exit(0)
 
 if args.output is None:
@@ -177,10 +179,10 @@ out_shapes=out/cdir
 for kind, src_shapes in matches.items():
     for old_shape in src_shapes:
         target=out_shapes/old_shape.name
-        overrides=read_meta(old_shape)  # preserve Bibata alias coverage exactly
+        overrides=read_meta(old_shape)
         write_brushbuddy_shape(target,kind,overrides)
         print(f"Patched {kind}: {target}")
 
 print(f"\nPatched COPY created at: {out}")
 print("Original Bibata working-state was not modified.")
-print("Generated Brushbuddy shapes contain explicit 24px and 256px variants.")
+print("Explicit raster sizes: 24, 32, 48, 64, 96, 256")

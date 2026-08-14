@@ -9,7 +9,7 @@ fi
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE="$1"
 SECONDS_TO_TEST="${2:-10}"
-SIZE="${3:-24}"
+SIZE="${3:-48}"
 FALLBACK="${4:-Bibata-Modern-Ice}"
 SRC="$HERE/$STAGE"
 

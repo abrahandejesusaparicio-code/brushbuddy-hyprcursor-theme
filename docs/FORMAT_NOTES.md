@@ -52,6 +52,18 @@ would have been sufficient, or whether Bibata's full 14-size ladder
 robustness across different displays/scales. 24+256 is simply the
 combination that was proven live on this machine's single 1x-scale display.
 
+**Update, v0.7:** this two-anchor combination turned out to be insufficient
+once someone actually requested a size other than 24. Requesting 48px with
+only 24px+256px anchors defined produced a cursor *smaller* than 24px, not
+bigger — reproduced twice live with mouse movement controlled for, so not a
+redraw-trap false negative. The gap between 24 and 256 (≈10.7x) appears too
+wide for `resize_algorithm = bilinear` to interpolate sanely on hyprcursor
+0.1.13. Fix was the same category of fix as the original bug: stop trusting
+interpolation, add more exact anchors. Every shape now declares six sizes —
+24/32/48/64/96/256px — and interpolation between *adjacent, close* anchors
+(tested: 40px between the 32 and 48 anchors) works fine. It's specifically
+wide gaps between anchors that seem to break.
+
 ## The mouse-redraw trap (caused a lot of false debugging)
 
 Hyprland does not seem to repaint the cursor sprite just because the active

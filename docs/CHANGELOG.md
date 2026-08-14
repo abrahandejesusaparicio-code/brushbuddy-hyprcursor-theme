@@ -70,3 +70,43 @@ from where the eye naturally aims. Moved to the midpoint between the
 character's two eyes for both `default` and the `pointer` family (which the
 12 resize shapes inherit), confirmed by visual crosshair overlay + live
 click/hover testing to feel natural.
+
+## v0.7 — six-size raster ladder (24/32/48/64/96/256)
+User wanted a bigger cursor than the 24px we'd been testing at. First
+surprise: 24px was never a hardware ceiling, just the size we happened to
+match when fixing the original invisible-cursor bug — but requesting 48px
+on the v0.6 build (which only had exact `define_size` anchors at 24 and
+256) rendered *smaller* than 24px, not bigger. Reproduced twice, live,
+with controlled mouse movement both times, so it wasn't the redraw quirk
+again — a genuine, separate bug, most likely in how hyprcursor 0.1.13's
+`resize_algorithm = bilinear` interpolates between two very far-apart
+anchors (256/24 ≈ 10.7x). Root cause not traced into the library; the
+diagnosis is described, not proven.
+
+Fix: stopped relying on interpolation across a wide gap entirely. Every
+Brushbuddy shape now gets six explicit raster anchors — 24/32/48/64/96/256px,
+pre-rendered from the 256px master via Pillow LANCZOS downscale — so any
+commonly-requested size has an exact or near match. `bilinear` remains set
+as the fallback for odd in-between sizes (e.g. 40px, confirmed working live
+between the close 32/48 anchors — small gaps interpolate fine, it's the wide
+ones that broke).
+
+Also fixed `validate_theme.py`'s scope bug from v0.5/v0.6 (it required the
+full size ladder on *every* shape in the tree, including untouched native
+Bibata shapes that never had more than a handful of sizes — 50 false-positive
+failures every run). Now detects Brushbuddy-generated files by their
+`frame_<size>_<NNN>.png` naming pattern and only enforces the ladder on
+those.
+
+Landed on **32px** as the actual permanent default after live-testing 24,
+32, 40, and 48 — 24 felt too small, 48 felt too big, 32 (an exact ladder
+anchor, not interpolated) felt right. Updated `~/.config/uwsm/env`, GTK 3/4
+`gtk-cursor-theme-size`, `gsettings`, live `systemctl --user
+set-environment`, and `hyprctl setcursor` accordingly.
+
+**Known behavior on hyprcursor 0.1.13:** with only two widely-spaced raster
+variants (24px and 256px) and `resize_algorithm = bilinear`, requesting an
+in-between size (48px tested) produced a cursor visually *smaller* than the
+smaller of the two variants. Exact cause unconfirmed — mitigated, not fixed,
+by providing explicit intermediate raster sizes instead of relying on
+interpolation across a wide size gap.

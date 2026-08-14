@@ -6,11 +6,13 @@ only the default pointer, link/hand pointer, and busy/wait cursors are replaced
 — everything else (resize handles, text cursor, crosshair, etc.) stays exactly
 as Bibata ships it.
 
-**Status: v0.6** — default, pointer, wait, and all 12 resize-direction
-cursors confirmed working and installed live on the target machine
-(Sentinel-home, Hyprland 0.56.2, hyprcursor 0.1.13). Hotspots tuned to the
-midpoint between the character's eyes (was the hat tip / paw tip — technically
-correct but an awkward, hard-to-aim click target) — see `docs/CHANGELOG.md`.
+**Status: v0.7** — all 18 shapes (default, pointer, wait, 12 resize
+directions) confirmed working at multiple cursor sizes, installed live on
+the target machine (Sentinel-home, Hyprland 0.56.2, hyprcursor 0.1.13) at
+`XCURSOR_SIZE=32`. Every shape now carries an explicit six-raster ladder
+(24/32/48/64/96/256px) instead of just two sizes — see `docs/CHANGELOG.md`
+for why that mattered (a real, reproduced-twice bug where an in-between size
+rendered *smaller* than a smaller requested size).
 
 This repo is documentation + source, not a redistribution of Bibata. To build
 the full merged theme you need your own local Bibata-Modern-Ice install and
@@ -20,14 +22,15 @@ the `hyprcursor-util` from the `hyprcursor` package.
 
 ```
 originals/         The 6 source Windows cursor files (3 static .cur, 3 animated .ani)
-working-state/      The hyprcursor "working-state" source for our 6 patched shapes only
-                     (left_ptr, hand1, hand2, link, left_ptr_watch, wait) — each with
-                     an explicit 24px + 256px define_size ladder per animation frame
+working-state/      The hyprcursor "working-state" source for our 18 patched shapes
+                     (left_ptr, hand1, hand2, link, left_ptr_watch, wait, plus 12
+                     resize-direction shapes) — each with an explicit six-size
+                     define_size ladder (24/32/48/64/96/256px) per animation frame
 tools/               Scripts used to build/test/patch (see below)
 docs/
   FACTCHECK.txt      Raw source-file analysis (frame counts, timing, header quirks)
   FORMAT_NOTES.md     What we learned about the hyprcursor format the hard way
-  CHANGELOG.md        Version history / debugging journey, v0.1 → v0.5
+  CHANGELOG.md        Version history / debugging journey, v0.1 → v0.7
 ```
 
 ## Tools
@@ -38,9 +41,10 @@ docs/
   for correct keys and that every referenced size/image actually exists.
 - `patch_bibata.py` — takes a `hyprcursor-util --extract`'d Bibata-Modern-Ice
   tree, auto-detects which of its shape directories correspond to
-  default/pointer/wait (by name + existing `define_override` aliases), and
-  produces a **patched copy** with Brushbuddy frames swapped in — the original
-  extraction is never modified.
+  default/pointer/wait/resize (by name + existing `define_override` aliases),
+  and produces a **patched copy** with Brushbuddy frames swapped in at an
+  explicit 24/32/48/64/96/256px ladder — the original extraction is never
+  modified.
 - `build_stage.sh` / `safe_test.sh` — compile a working-state tree with
   `hyprcursor-util --create` and (for `safe_test.sh`) install it under a
   scratch theme name, switch to it live, then **automatically revert** to a
@@ -77,13 +81,13 @@ cp -a /tmp/Brushbuddy-Bibata-build/theme_Brushbuddy-Bibata \
 
 # 6. Point your session at it (Hyprland/UWSM example — ~/.config/uwsm/env):
 #   export HYPRCURSOR_THEME="Brushbuddy-Bibata"
-#   export HYPRCURSOR_SIZE=24
+#   export HYPRCURSOR_SIZE=32
 #   export XCURSOR_THEME="Brushbuddy-Bibata"
-#   export XCURSOR_SIZE=24
+#   export XCURSOR_SIZE=32
 # then live-apply without logging out:
-#   systemctl --user set-environment XCURSOR_THEME=Brushbuddy-Bibata XCURSOR_SIZE=24 \
-#       HYPRCURSOR_THEME=Brushbuddy-Bibata HYPRCURSOR_SIZE=24
-#   hyprctl setcursor Brushbuddy-Bibata 24
+#   systemctl --user set-environment XCURSOR_THEME=Brushbuddy-Bibata XCURSOR_SIZE=32 \
+#       HYPRCURSOR_THEME=Brushbuddy-Bibata HYPRCURSOR_SIZE=32
+#   hyprctl setcursor Brushbuddy-Bibata 32
 ```
 
 Also update GTK's `gtk-cursor-theme-name` in `~/.config/gtk-3.0/settings.ini`

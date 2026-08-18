@@ -147,7 +147,7 @@ See `docs/FORMAT_NOTES.md`.
   (`.cur`/`.ani`) by [Korada_art](https://www.instagram.com/korada_art) —
   go give them a follow, they deserve it
 - Reverse-engineering the hyprcursor format, the installer/uninstaller, and a
-  lot of very patient live testing: Ace
+  lot of very patient live testing: ABE
 
 ## Found a bug?
 

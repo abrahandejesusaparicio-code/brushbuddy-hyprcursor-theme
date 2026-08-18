@@ -27,11 +27,18 @@ See it animated in motion: [showcase reel on Instagram](https://www.instagram.co
 
 ## Install
 
-```bash
-git clone https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme.git
-cd brushbuddy-hyprcursor-theme
-./install.sh
-```
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme.git
+   ```
+2. Move into it:
+   ```bash
+   cd brushbuddy-hyprcursor-theme
+   ```
+3. Run the installer:
+   ```bash
+   ./install.sh
+   ```
 
 The installer:
 - Detects your environment (Hyprland, GTK 3/4, UWSM, classic `hyprland.conf`,

@@ -1,6 +1,6 @@
 # Brushbuddy → Hyprcursor
 
-*A little ghost in a witch hat, haunting your pointer instead of your screen. 👻*
+*A fluffy little Brushbuddy in a witch hat, tagging along with your pointer instead of Coco's ink. 🐾*
 
 A custom animated cursor theme for Hyprland, built from "Brushbuddy" — a
 *Witch Hat Atelier*-themed Windows cursor pack (`.cur`/`.ani`) by
@@ -143,8 +143,8 @@ See `docs/FORMAT_NOTES.md`.
 </p>
 
 - Cursor art: "Brushbuddy", a *Witch Hat Atelier*-themed Windows cursor pack
-  (`.cur`/`.ani`), by [Korada_art](https://www.instagram.com/korada_art) —
-  go give the little ghost a follow, it deserves it
+  (`.cur`/`.ani`) by [Korada_art](https://www.instagram.com/korada_art) —
+  go give them a follow, they deserve it
 - Reverse-engineering the hyprcursor format, the installer/uninstaller, and a
   lot of very patient live testing: Ace
 

@@ -7,6 +7,8 @@ STATE_DIR="$HOME/.config/brushbuddy-hyprcursor"
 STATE_FILE="$STATE_DIR/install-state"
 DEST_DIR="$HOME/.local/share/icons/$THEME_NAME"
 UWSM_ENV="$HOME/.config/uwsm/env"
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+HYPR_LUA_ENV="$HOME/.config/hypr/config/environment.lua"
 GTK3_INI="$HOME/.config/gtk-3.0/settings.ini"
 GTK4_INI="$HOME/.config/gtk-4.0/settings.ini"
 
@@ -29,6 +31,16 @@ echo ""
 if [ -f "$STATE_DIR/backups/uwsm-env.bak" ] && [ -f "$UWSM_ENV" ]; then
     cp "$STATE_DIR/backups/uwsm-env.bak" "$UWSM_ENV"
     ok "Hyprland (UWSM) environment restored"
+fi
+
+if [ "${HYPR_CONF_CONFIGURED:-0}" = 1 ] && [ -f "$STATE_DIR/backups/hyprland-conf.bak" ] && [ -f "$HYPR_CONF" ]; then
+    cp "$STATE_DIR/backups/hyprland-conf.bak" "$HYPR_CONF"
+    ok "Classic hyprland.conf restored"
+fi
+
+if [ "${HYPR_LUA_CONFIGURED:-0}" = 1 ] && [ -f "$STATE_DIR/backups/environment-lua.bak" ] && [ -f "$HYPR_LUA_ENV" ]; then
+    cp "$STATE_DIR/backups/environment-lua.bak" "$HYPR_LUA_ENV"
+    ok "CachyOS Lua config wrapper restored"
 fi
 
 if [ "${GTK_CONFIGURED:-0}" = 1 ]; then

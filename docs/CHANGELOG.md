@@ -156,3 +156,28 @@ way). Verified fixed with a full round-trip test: simulated a genuine
 pre-Brushbuddy backup, resized via `--size 48`, confirmed the original
 backup survived untouched, then uninstalled and confirmed correct restore
 with no dangling reference.
+
+## v0.9 — cursor didn't survive a reboot (fixed)
+**Bug found in the field:** on a machine that boots Hyprland directly from a
+display manager's plain "Hyprland" session entry (no UWSM), or via CachyOS's
+Lua config wrapper (`~/.config/hypr/hyprland.lua` + `config/*.lua`) instead
+of a plain `hyprland.conf`, `install.sh` only ever wrote
+`HYPRCURSOR_THEME`/`HYPRCURSOR_SIZE` to `~/.config/uwsm/env` — a file that is
+never read outside a uwsm-launched session — then fell back to just
+*printing* manual `env = ...` lines for the user to add by hand. Nothing
+wrote them automatically. Result: the cursor applied fine live, but silently
+reverted to the default theme after every reboot, with no error to explain
+why.
+
+Fixed by having `install.sh` also detect and write, when present:
+- `~/.config/hypr/hyprland.conf` (classic non-UWSM Hyprland), as
+  `env = HYPRCURSOR_THEME,...` lines inside a marked, idempotent block
+- `~/.config/hypr/config/environment.lua` (CachyOS's Lua config wrapper),
+  as `hl.env(...)` calls inside the same kind of marked block
+
+Both are backed up before the first write and restored by `uninstall.sh`,
+matching the existing UWSM/GTK backup-and-restore pattern. The "no
+persistence path found, here's what to add by hand" fallback now only
+triggers if *none* of UWSM env, `hyprland.conf`, or the Lua wrapper exist.
+Verified fixed on the machine that originally hit the bug (CachyOS, Lua
+config wrapper, no UWSM): cursor now stays set across a full power off/on.

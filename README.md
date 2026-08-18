@@ -1,15 +1,26 @@
 # Brushbuddy → Hyprcursor
 
-A custom animated cursor theme for Hyprland, built from a "Brushbuddy witch hat"
-Windows cursor pack (`.cur`/`.ani`) and merged into a Bibata-Modern-Ice base so
-only the default pointer, link/hand pointer, wait/loading, and all 12
-resize-direction cursors are replaced — everything else (text cursor,
-crosshair, etc.) stays exactly as Bibata ships it.
+A custom animated cursor theme for Hyprland, built from "Brushbuddy" — a
+*Witch Hat Atelier*-themed Windows cursor pack (`.cur`/`.ani`) by
+[Korada_art](https://www.instagram.com/korada_art) — merged into a
+Bibata-Modern-Ice base so only the default pointer, link/hand pointer,
+wait/loading, and all 12 resize-direction cursors are replaced — everything
+else (text cursor, crosshair, etc.) stays exactly as Bibata ships it.
 
-**Status: v0.8** — all 18 shapes confirmed working at multiple cursor sizes,
-plus a self-contained installer/uninstaller with rollback. See
+**Status: v0.9** — all 18 shapes confirmed working at multiple cursor sizes,
+a self-contained installer/uninstaller with rollback, and the cursor theme
+now survives a reboot on every Hyprland session-launch method (UWSM,
+classic `hyprland.conf`, and CachyOS's Lua config wrapper). See
 `docs/CHANGELOG.md` for the full debugging journey (there were some real
 bugs along the way, documented rather than hidden).
+
+## Preview
+
+<p align="center">
+  <img src="docs/images/cursor-preview.png" alt="Brushbuddy cursor shapes: pointer, link/hand, loading" width="600">
+</p>
+
+See it animated in motion: [showcase reel on Instagram](https://www.instagram.com/reel/Db_eJl7t76R/).
 
 ## Install
 
@@ -20,8 +31,13 @@ cd brushbuddy-hyprcursor-theme
 ```
 
 The installer:
-- Detects your environment (Hyprland, GTK 3/4, UWSM, gsettings, Flatpak) and
-  tells you what it found and what it's skipping
+- Detects your environment (Hyprland, GTK 3/4, UWSM, classic `hyprland.conf`,
+  CachyOS's Lua config wrapper, gsettings, Flatpak) and tells you what it
+  found and what it's skipping
+- Writes the cursor choice to every persistence path that applies (UWSM env,
+  classic `hyprland.conf`, CachyOS's Lua wrapper, GTK) so it survives a
+  reboot no matter how your session is launched — see the "Cursor didn't
+  survive a reboot" note in `docs/CHANGELOG.md` (v0.9) for why this matters
 - Backs up your current cursor settings **before** touching anything
 - Walks you through cursor sizes **one at a time, live** — it won't move to
   the next size until you explicitly confirm you're happy with the current
@@ -119,7 +135,13 @@ See `docs/FORMAT_NOTES.md`.
 
 ## Credits
 
-- Source cursor art: "Brushbuddy" witch-hat pack (third-party, not authored here)
+<p align="center">
+  <img src="docs/images/korada_art.jpg" alt="Korada_art" width="140"><br>
+  <strong>Korada_art</strong> — <a href="https://www.instagram.com/korada_art">@korada_art on Instagram</a>
+</p>
+
+- Source cursor art: "Brushbuddy", a *Witch Hat Atelier*-themed Windows
+  cursor pack (`.cur`/`.ani`), by [Korada_art](https://www.instagram.com/korada_art)
 - Format reverse-engineering, `.ani` parsing, and machine-specific testing: Claude (Anthropic)
 - hyprcursor tooling (`patch_bibata.py`, `validate_theme.py`, size-ladder fix,
   installer design): Delamain (ChatGPT)

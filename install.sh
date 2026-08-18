@@ -13,8 +13,13 @@ STATE_DIR="$HOME/.config/brushbuddy-hyprcursor"
 STATE_FILE="$STATE_DIR/install-state"
 DEST_DIR="$HOME/.local/share/icons/$THEME_NAME"
 UWSM_ENV="$HOME/.config/uwsm/env"
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+HYPR_LUA_MAIN="$HOME/.config/hypr/hyprland.lua"
+HYPR_LUA_ENV="$HOME/.config/hypr/config/environment.lua"
 GTK3_INI="$HOME/.config/gtk-3.0/settings.ini"
 GTK4_INI="$HOME/.config/gtk-4.0/settings.ini"
+MARKER="# brushbuddy-cursor-install"
+LUA_MARKER="-- brushbuddy-cursor-install"
 
 SIZES=(24 32 48 64 96)
 RECOMMENDED=32
@@ -65,14 +70,25 @@ HAS_GSETTINGS=0; command -v gsettings >/dev/null 2>&1 && HAS_GSETTINGS=1
 HAS_GTK3=0;      [ -f "$GTK3_INI" ] && HAS_GTK3=1
 HAS_GTK4=0;      [ -f "$GTK4_INI" ] && HAS_GTK4=1
 HAS_UWSM=0;      [ -f "$UWSM_ENV" ] && HAS_UWSM=1
+HAS_HYPR_CONF=0; [ -f "$HYPR_CONF" ] && HAS_HYPR_CONF=1
+HAS_HYPR_LUA=0;  [ -f "$HYPR_LUA_MAIN" ] && [ -f "$HYPR_LUA_ENV" ] && HAS_HYPR_LUA=1
 HAS_FLATPAK=0;   command -v flatpak >/dev/null 2>&1 && HAS_FLATPAK=1
 
 [ "$HAS_HYPRCTL" = 1 ]   && ok "Hyprland (hyprctl found)"   || err "Hyprland (hyprctl NOT found)"
 [ "$HAS_GSETTINGS" = 1 ] && ok "GTK (gsettings found)"      || warn "gsettings not found -- GTK apps may not pick up the theme"
 [ "$HAS_GTK3" = 1 ]      && ok "GTK 3 settings.ini"          || warn "No GTK 3 settings.ini -- skipping"
 [ "$HAS_GTK4" = 1 ]      && ok "GTK 4 settings.ini"          || warn "No GTK 4 settings.ini -- skipping"
-[ "$HAS_UWSM" = 1 ]      && ok "UWSM session (~/.config/uwsm/env)" || warn "No UWSM env file -- will print manual env-var instructions instead"
+[ "$HAS_UWSM" = 1 ]      && ok "UWSM session (~/.config/uwsm/env)" || warn "No UWSM env file -- will try other persistence paths"
+[ "$HAS_HYPR_CONF" = 1 ] && ok "Classic hyprland.conf (~/.config/hypr/hyprland.conf)" || warn "No classic hyprland.conf -- skipping"
+[ "$HAS_HYPR_LUA" = 1 ]  && ok "CachyOS Lua config wrapper (~/.config/hypr/config/environment.lua)" || warn "No CachyOS Lua config wrapper -- skipping"
 [ "$HAS_FLATPAK" = 1 ]   && warn "Flatpak detected -- sandboxed apps may not see this cursor theme (see --flatpak-support)"
+
+if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
+    warn "No UWSM env, hyprland.conf, or Lua config wrapper found -- the theme"
+    warn "will only apply to the current session and will NOT survive a reboot."
+    warn "You'll need to add HYPRCURSOR_THEME/HYPRCURSOR_SIZE env vars to your"
+    warn "Hyprland startup config by hand."
+fi
 
 if [ "$HAS_HYPRCTL" != 1 ]; then
     err "This installer is Hyprland-specific and hyprctl was not found. Aborting."
@@ -139,7 +155,12 @@ if [ "$DRY_RUN" = 1 ]; then
     say "  Previous cursor theme: $PREV_HYPRCURSOR_THEME @ ${PREV_HYPRCURSOR_SIZE}px"
     say "Would install theme to: $DEST_DIR"
     [ "$NO_GTK" = 0 ] && say "Would configure GTK settings.ini + gsettings" || say "Would skip GTK (--no-gtk)"
-    [ "$HAS_UWSM" = 1 ] && say "Would update: $UWSM_ENV" || say "Would print manual env-var instructions (no UWSM env file found)"
+    [ "$HAS_UWSM" = 1 ] && say "Would update: $UWSM_ENV"
+    [ "$HAS_HYPR_CONF" = 1 ] && say "Would update: $HYPR_CONF"
+    [ "$HAS_HYPR_LUA" = 1 ] && say "Would update: $HYPR_LUA_ENV"
+    if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
+        say "Would print manual env-var instructions (no persistence path found)"
+    fi
     say "Would run: hyprctl setcursor $THEME_NAME <chosen size>"
     say ""
     say "No files were changed."
@@ -223,6 +244,8 @@ mkdir -p "$STATE_DIR/backups"
     echo "PREVIOUS_GTK_SIZE=$PREV_GTK_SIZE"
     echo "GTK_CONFIGURED=$([ "$NO_GTK" = 1 ] && echo 0 || echo 1)"
     echo "UWSM_ENV_FILE=$UWSM_ENV"
+    echo "HYPR_CONF_CONFIGURED=$HAS_HYPR_CONF"
+    echo "HYPR_LUA_CONFIGURED=$HAS_HYPR_LUA"
     echo "INSTALLED_SIZE=$CHOSEN_SIZE"
 } > "$STATE_FILE"
 if [ "$REUSE_BACKUP" = 1 ]; then
@@ -231,6 +254,8 @@ else
     [ "$HAS_UWSM" = 1 ] && cp "$UWSM_ENV" "$STATE_DIR/backups/uwsm-env.bak"
     [ "$HAS_GTK3" = 1 ] && cp "$GTK3_INI" "$STATE_DIR/backups/gtk3-settings.ini.bak"
     [ "$HAS_GTK4" = 1 ] && cp "$GTK4_INI" "$STATE_DIR/backups/gtk4-settings.ini.bak"
+    [ "$HAS_HYPR_CONF" = 1 ] && cp "$HYPR_CONF" "$STATE_DIR/backups/hyprland-conf.bak"
+    [ "$HAS_HYPR_LUA" = 1 ] && cp "$HYPR_LUA_ENV" "$STATE_DIR/backups/environment-lua.bak"
     ok "Previous cursor settings backed up to $STATE_DIR"
 fi
 
@@ -256,8 +281,42 @@ if [ "$HAS_UWSM" = 1 ]; then
         echo "export XCURSOR_SIZE=$CHOSEN_SIZE" >> "$UWSM_ENV"
     fi
     ok "Hyprland (UWSM) environment configured"
-else
-    warn "No UWSM env file found. Add these to your Hyprland startup config manually:"
+fi
+
+# Classic hyprland.conf (non-UWSM sessions) and CachyOS's Lua config wrapper
+# both need writing too -- HYPRCURSOR_THEME in uwsm/env is only ever read on
+# uwsm-launched sessions, so on a machine that boots Hyprland directly (e.g.
+# a display manager's plain "Hyprland" entry) or via CachyOS's Lua config,
+# uwsm/env alone leaves the theme reverting to default on every reboot with
+# no error. Write every path that applies so it persists regardless of how
+# the session is launched.
+if [ "$HAS_HYPR_CONF" = 1 ]; then
+    sed -i "/${MARKER}/,+4d" "$HYPR_CONF"
+    {
+        echo "$MARKER"
+        echo "env = HYPRCURSOR_THEME,$THEME_NAME"
+        echo "env = HYPRCURSOR_SIZE,$CHOSEN_SIZE"
+        echo "env = XCURSOR_THEME,$THEME_NAME"
+        echo "env = XCURSOR_SIZE,$CHOSEN_SIZE"
+    } >> "$HYPR_CONF"
+    ok "Classic hyprland.conf configured"
+fi
+
+if [ "$HAS_HYPR_LUA" = 1 ]; then
+    sed -i "/${LUA_MARKER}/,+4d" "$HYPR_LUA_ENV"
+    {
+        echo "$LUA_MARKER"
+        echo "hl.env(\"HYPRCURSOR_THEME\", \"$THEME_NAME\")"
+        echo "hl.env(\"HYPRCURSOR_SIZE\", \"$CHOSEN_SIZE\")"
+        echo "hl.env(\"XCURSOR_THEME\", \"$THEME_NAME\")"
+        echo "hl.env(\"XCURSOR_SIZE\", \"$CHOSEN_SIZE\")"
+    } >> "$HYPR_LUA_ENV"
+    ok "CachyOS Lua config wrapper configured"
+fi
+
+if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
+    warn "No UWSM env, hyprland.conf, or Lua config wrapper found. Add these to"
+    warn "your Hyprland startup config manually, or the theme won't survive a reboot:"
     say "    env = HYPRCURSOR_THEME,$THEME_NAME"
     say "    env = HYPRCURSOR_SIZE,$CHOSEN_SIZE"
     say "    env = XCURSOR_THEME,$THEME_NAME"

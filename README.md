@@ -27,6 +27,10 @@ See it animated in motion: [showcase reel on Instagram](https://www.instagram.co
 
 ## Install
 
+<p align="center">
+  <img src="docs/images/installer-screenshot.png" alt="install.sh walking through environment detection, the size wizard, and a successful install" width="640">
+</p>
+
 1. Clone the repo:
    ```bash
    git clone https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme.git
@@ -118,7 +122,7 @@ tools/                 Scripts to rebuild/test/patch the theme from source
 docs/
   FACTCHECK.txt        Raw source-file analysis (frame counts, timing, header quirks)
   FORMAT_NOTES.md       What we learned about the hyprcursor format the hard way
-  CHANGELOG.md          Version history / debugging journey, v0.1 → v0.8
+  CHANGELOG.md          Version history / debugging journey, v0.1 → v0.10
 ```
 
 ## Rebuilding from source

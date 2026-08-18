@@ -1,5 +1,7 @@
 # Brushbuddy → Hyprcursor
 
+*A little ghost in a witch hat, haunting your pointer instead of your screen. 👻*
+
 A custom animated cursor theme for Hyprland, built from "Brushbuddy" — a
 *Witch Hat Atelier*-themed Windows cursor pack (`.cur`/`.ani`) by
 [Korada_art](https://www.instagram.com/korada_art) — merged into a
@@ -140,6 +142,19 @@ See `docs/FORMAT_NOTES.md`.
   <strong>Korada_art</strong> — <a href="https://www.instagram.com/korada_art">@korada_art on Instagram</a>
 </p>
 
-- Source cursor art: "Brushbuddy", a *Witch Hat Atelier*-themed Windows
-  cursor pack (`.cur`/`.ani`), by [Korada_art](https://www.instagram.com/korada_art)
-- hyprcursor tooling (`patch_bibata.py`, `validate_theme.py`, size-ladder fix,
+- Cursor art: "Brushbuddy", a *Witch Hat Atelier*-themed Windows cursor pack
+  (`.cur`/`.ani`), by [Korada_art](https://www.instagram.com/korada_art) —
+  go give the little ghost a follow, it deserves it
+- Reverse-engineering the hyprcursor format, the installer/uninstaller, and a
+  lot of very patient live testing: Ace
+
+## Found a bug?
+
+`docs/CHANGELOG.md` is basically a bug diary already — cursors gone
+invisible, hotspots drifting, a whole reboot-persistence saga — so don't be
+shy about adding to it. If something's off (a shape looks wrong, a size
+won't apply, the installer trips on your setup), please
+[open an issue](https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme/issues).
+Include your distro, how you launch Hyprland (UWSM / classic
+`hyprland.conf` / something else), and whatever `./install.sh` printed —
+that's usually enough to track it down.

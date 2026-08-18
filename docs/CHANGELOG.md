@@ -16,7 +16,7 @@ Built a matching source tree, compiled successfully, installed live —
 Root cause not yet understood at this point.
 
 ## v0.3 — collaborative debugging kit
-Brought in a second AI collaborator ("Delamain", ChatGPT) to build an
+Brought in a second AI collaborator ("Delamain") to build an
 independent, isolated test kit (`brushbuddy-hyprcursor-kit.zip`): three
 incremental stages (static-only → +2-frame pointer → +46-frame wait), a
 Bibata-preserving patcher (`patch_bibata.py`), a strict validator, and a

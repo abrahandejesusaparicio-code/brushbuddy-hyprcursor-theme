@@ -9,10 +9,6 @@ Bibata-Modern-Ice base so only the default pointer, link/hand pointer,
 wait/loading, and all 12 resize-direction cursors are replaced — everything
 else (text cursor, crosshair, etc.) stays exactly as Bibata ships it.
 
-Fun fact: the fandom adores this little guy — widely agreed to be one of the
-cutest things in the series, Qifrey's self-declared favorite, and star of a
-wonderfully unhinged fan theory that it's secretly the story's real
-mastermind. No comment on whether it's now also running your cursor.
 
 **Status: v0.9** — all 18 shapes confirmed working at multiple cursor sizes,
 a self-contained installer/uninstaller with rollback, and the cursor theme

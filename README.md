@@ -1,9 +1,11 @@
 # Brushbuddy → Hyprcursor
 
-[![Release](https://img.shields.io/github/v/release/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme?label=release&color=cba6f7)](https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme/releases/latest)
-[![License](https://img.shields.io/github/license/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme?color=f9e2af)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Hyprland-89b4fa)](https://hyprland.org)
-[![Base theme](https://img.shields.io/badge/base-Bibata--Modern--Ice-a6e3a1)](https://github.com/ful1e5/Bibata_Cursor)
+[![Release](https://img.shields.io/github/v/release/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme?label=release&color=007ec6)](https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme/releases/latest)
+[![License](https://img.shields.io/github/license/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme?color=007ec6)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Hyprland-8250df)](https://hyprland.org)
+[![Base theme](https://img.shields.io/badge/base-Bibata--Modern--Ice-8250df)](https://github.com/ful1e5/Bibata_Cursor)
+[![Shell](https://img.shields.io/badge/shell-Bash-89e051)](install.sh)
+[![Python](https://img.shields.io/badge/python-3-3572A5)](tools/patch_bibata.py)
 
 *A fluffy little Brushbuddy in a witch hat, tagging along with your pointer instead of Coco's ink. 🐾*
 

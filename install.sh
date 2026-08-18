@@ -4,6 +4,10 @@
 # Installs a precompiled hyprcursor theme (no hyprcursor-util/Python/Pillow
 # needed at install time -- those are only for contributors rebuilding the
 # theme from source, see working-state/ and tools/).
+#
+# This file has two halves: the detection/backup/persistence logic (the
+# "brain") and a presentation layer on top of it (the "face") -- see
+# docs/CHANGELOG.md v0.10 if you're wondering why it's laid out this way.
 set -uo pipefail
 
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,6 +31,7 @@ RECOMMENDED=32
 DRY_RUN=0
 NO_GTK=0
 FLATPAK_SUPPORT=0
+VERBOSE=0
 FORCE_SIZE=""
 
 usage() {
@@ -38,6 +43,7 @@ Usage: ./install.sh [options]
   --no-gtk          Don't touch GTK settings.ini / gsettings
   --flatpak-support Also export GTK_THEME / XCURSOR_PATH for Flatpak apps
   --dry-run         Show what would happen, change nothing
+  --verbose         Show file paths and exactly which persistence methods ran
   -h, --help        This message
 EOF
 }
@@ -48,23 +54,64 @@ while [ $# -gt 0 ]; do
         --no-gtk) NO_GTK=1; shift ;;
         --flatpak-support) FLATPAK_SUPPORT=1; shift ;;
         --dry-run) DRY_RUN=1; shift ;;
+        --verbose) VERBOSE=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 2 ;;
     esac
 done
 
-say()  { printf '%s\n' "$1"; }
-ok()   { printf '\033[32m✓\033[0m %s\n' "$1"; }
-warn() { printf '\033[33m⚠\033[0m %s\n' "$1"; }
-err()  { printf '\033[31m✗\033[0m %s\n' "$1" >&2; }
+# ---------------------------------------------------------------------------
+# Presentation layer -- colors (only on a real terminal, never a hardcoded
+# background), and the little helpers everything below is built from.
+# ---------------------------------------------------------------------------
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    C_TITLE=$'\033[35m'; C_BOLD=$'\033[1m'; C_OK=$'\033[32m'
+    C_WARN=$'\033[33m';  C_ERR=$'\033[31m'; C_CYAN=$'\033[36m'
+    C_DIM=$'\033[2m';    C_RESET=$'\033[0m'
+else
+    C_TITLE=""; C_BOLD=""; C_OK=""; C_WARN=""; C_ERR=""; C_CYAN=""; C_DIM=""; C_RESET=""
+fi
+RULE="────────────────────────────────────────────────"
+
+say()    { printf '%s\n' "$1"; }
+ok()     { printf '  %s✓%s %s\n' "$C_OK" "$C_RESET" "$1"; }
+warn()   { printf '  %s⚠%s %s\n' "$C_WARN" "$C_RESET" "$1"; }
+err()    { printf '  %s✗%s %s\n' "$C_ERR" "$C_RESET" "$1" >&2; }
+detail() { [ "$VERBOSE" = 1 ] && printf '      %s↳%s %s\n' "$C_DIM" "$C_RESET" "$1"; return 0; }
+rule()   { printf '%s\n' "$RULE"; }
+
+size_label() {
+    local s="$1"
+    if [ "$s" = "$RECOMMENDED" ]; then printf 'recommended'; return; fi
+    case "$s" in
+        24) printf 'compact' ;;
+        48) printf 'large' ;;
+        64) printf 'extra large' ;;
+        96) printf 'huge' ;;
+        *)  printf '' ;;
+    esac
+}
+
+print_welcome() {
+    printf '        /\\\n'
+    printf '       /  \\\n'
+    printf '      /____\\\n'
+    printf '     ( %s•ᴗ•%s )\n' "$C_TITLE" "$C_RESET"
+    printf '\n'
+    printf '  %s%sBrushbuddy%s → Hyprland\n' "$C_TITLE" "$C_BOLD" "$C_RESET"
+    printf '  A tiny witch for your pointer.\n'
+}
+
+print_welcome
+printf '\n'
+rule
+printf '\n'
+say "  Checking your setup..."
+printf '\n'
 
 # ---------------------------------------------------------------------------
 # 1. Environment detection
 # ---------------------------------------------------------------------------
-say "Brushbuddy installer"
-say ""
-say "Detecting your environment..."
-
 HAS_HYPRCTL=0;   command -v hyprctl >/dev/null 2>&1 && HAS_HYPRCTL=1
 HAS_GSETTINGS=0; command -v gsettings >/dev/null 2>&1 && HAS_GSETTINGS=1
 HAS_GTK3=0;      [ -f "$GTK3_INI" ] && HAS_GTK3=1
@@ -74,20 +121,39 @@ HAS_HYPR_CONF=0; [ -f "$HYPR_CONF" ] && HAS_HYPR_CONF=1
 HAS_HYPR_LUA=0;  [ -f "$HYPR_LUA_MAIN" ] && [ -f "$HYPR_LUA_ENV" ] && HAS_HYPR_LUA=1
 HAS_FLATPAK=0;   command -v flatpak >/dev/null 2>&1 && HAS_FLATPAK=1
 
-[ "$HAS_HYPRCTL" = 1 ]   && ok "Hyprland (hyprctl found)"   || err "Hyprland (hyprctl NOT found)"
-[ "$HAS_GSETTINGS" = 1 ] && ok "GTK (gsettings found)"      || warn "gsettings not found -- GTK apps may not pick up the theme"
-[ "$HAS_GTK3" = 1 ]      && ok "GTK 3 settings.ini"          || warn "No GTK 3 settings.ini -- skipping"
-[ "$HAS_GTK4" = 1 ]      && ok "GTK 4 settings.ini"          || warn "No GTK 4 settings.ini -- skipping"
-[ "$HAS_UWSM" = 1 ]      && ok "UWSM session (~/.config/uwsm/env)" || warn "No UWSM env file -- will try other persistence paths"
-[ "$HAS_HYPR_CONF" = 1 ] && ok "Classic hyprland.conf (~/.config/hypr/hyprland.conf)" || warn "No classic hyprland.conf -- skipping"
-[ "$HAS_HYPR_LUA" = 1 ]  && ok "CachyOS Lua config wrapper (~/.config/hypr/config/environment.lua)" || warn "No CachyOS Lua config wrapper -- skipping"
-[ "$HAS_FLATPAK" = 1 ]   && warn "Flatpak detected -- sandboxed apps may not see this cursor theme (see --flatpak-support)"
+if [ "$HAS_HYPRCTL" = 1 ]; then
+    hypr_via=""
+    [ "$HAS_UWSM" = 1 ]      && hypr_via="UWSM"
+    [ "$HAS_HYPR_CONF" = 1 ] && hypr_via="${hypr_via:+$hypr_via + }hyprland.conf"
+    [ "$HAS_HYPR_LUA" = 1 ]  && hypr_via="${hypr_via:+$hypr_via + }Lua config"
+    [ -z "$hypr_via" ] && hypr_via="no persistent config found"
+    printf '  %s✓%s %-14s %s\n' "$C_OK" "$C_RESET" "Hyprland" "$hypr_via"
+else
+    err "Hyprland (hyprctl NOT found)"
+fi
+
+gtk_bits=""
+[ "$HAS_GTK3" = 1 ] && gtk_bits="GTK 3"
+[ "$HAS_GTK4" = 1 ] && gtk_bits="${gtk_bits:+$gtk_bits + }GTK 4"
+[ -n "$gtk_bits" ] && printf '  %s✓%s %-14s %s\n' "$C_OK" "$C_RESET" "GTK" "$gtk_bits"
+[ "$HAS_GSETTINGS" = 1 ] && printf '  %s✓%s %-14s %s\n' "$C_OK" "$C_RESET" "gsettings" "available"
+[ "$HAS_FLATPAK" = 1 ] && warn "Flatpak detected -- add --flatpak-support to grant it access too"
+printf '\n'
 
 if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
-    warn "No UWSM env, hyprland.conf, or Lua config wrapper found -- the theme"
-    warn "will only apply to the current session and will NOT survive a reboot."
-    warn "You'll need to add HYPRCURSOR_THEME/HYPRCURSOR_SIZE env vars to your"
-    warn "Hyprland startup config by hand."
+    warn "No place to persist the cursor choice was found (no UWSM env,"
+    say  "    hyprland.conf, or Lua config wrapper) -- it'll apply now but won't"
+    say  "    survive a reboot. Add these to your Hyprland startup config by hand:"
+    say  "      env = HYPRCURSOR_THEME,$THEME_NAME"
+    say  "      env = HYPRCURSOR_SIZE,<size>"
+    say  "      env = XCURSOR_THEME,$THEME_NAME"
+    say  "      env = XCURSOR_SIZE,<size>"
+    printf '\n'
+fi
+
+if [ -z "$gtk_bits" ] && [ "$HAS_GSETTINGS" != 1 ]; then
+    warn "GTK settings could not be found -- Brushbuddy will still work inside Hyprland."
+    printf '\n'
 fi
 
 if [ "$HAS_HYPRCTL" != 1 ]; then
@@ -101,19 +167,26 @@ if [ ! -d "$THEME_SRC" ]; then
     exit 1
 fi
 
-say ""
-
 # ---------------------------------------------------------------------------
 # 2. Detect current cursor state (for backup/rollback)
 # ---------------------------------------------------------------------------
 detect_current() {
-    local var="$1" fallback="$2" src=""
-    local val="${!var:-}"
-    if [ -z "$val" ] && [ "$HAS_UWSM" = 1 ]; then
+    local var="$1" fallback="$2" val=""
+    # The UWSM env file is checked FIRST and the live process/systemd
+    # environment only as a fallback -- not the other way around. Brushbuddy
+    # itself calls `systemctl --user set-environment`, and that value can
+    # keep showing up in every new shell's environment (including this
+    # script's own) even after uninstall.sh has correctly restored the file.
+    # Trusting the live env first meant a reinstall right after an uninstall
+    # could "detect" Brushbuddy-Bibata as the user's own previous theme --
+    # corrupting the backup chain into a self-reference. The file is what
+    # actually persists across a reboot, so it's the correct source of truth.
+    if [ "$HAS_UWSM" = 1 ]; then
         # handles both  export FOO="bar"  and  export FOO=32  (no quotes)
         val="$(grep -oP "(?<=export ${var}=)[\"']?[^\"'\\n]+[\"']?" "$UWSM_ENV" 2>/dev/null \
                | tail -1 | tr -d '"'"'"'')"
     fi
+    [ -z "$val" ] && val="${!var:-}"
     [ -z "$val" ] && val="$fallback"
     printf '%s' "$val"
 }
@@ -133,7 +206,9 @@ if [ -f "$STATE_FILE" ]; then
         PREV_XCURSOR_THEME="$PREVIOUS_XCURSOR_THEME"
         PREV_XCURSOR_SIZE="$PREVIOUS_XCURSOR_SIZE"
         PREV_GTK_SIZE="$PREVIOUS_GTK_SIZE"
-        say "Brushbuddy is already installed -- reusing your original backup (${PREV_HYPRCURSOR_THEME} @ ${PREV_HYPRCURSOR_SIZE}px) instead of overwriting it."
+        say "  Brushbuddy's already installed -- keeping your original backup"
+        say "  (${PREV_HYPRCURSOR_THEME} @ ${PREV_HYPRCURSOR_SIZE}px) instead of overwriting it."
+        printf '\n'
     fi
 fi
 
@@ -150,36 +225,45 @@ if [ "$REUSE_BACKUP" != 1 ]; then
 fi
 
 if [ "$DRY_RUN" = 1 ]; then
-    say "--- DRY RUN: no files will be changed ---"
-    say "Would back up current state to: $STATE_FILE"
-    say "  Previous cursor theme: $PREV_HYPRCURSOR_THEME @ ${PREV_HYPRCURSOR_SIZE}px"
-    say "Would install theme to: $DEST_DIR"
-    [ "$NO_GTK" = 0 ] && say "Would configure GTK settings.ini + gsettings" || say "Would skip GTK (--no-gtk)"
-    [ "$HAS_UWSM" = 1 ] && say "Would update: $UWSM_ENV"
-    [ "$HAS_HYPR_CONF" = 1 ] && say "Would update: $HYPR_CONF"
-    [ "$HAS_HYPR_LUA" = 1 ] && say "Would update: $HYPR_LUA_ENV"
-    if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
-        say "Would print manual env-var instructions (no persistence path found)"
-    fi
-    say "Would run: hyprctl setcursor $THEME_NAME <chosen size>"
-    say ""
-    say "No files were changed."
+    rule
+    printf '\n'
+    say "  Brushbuddy dry run -- nothing will be changed"
+    printf '\n'
+    say "  Would install theme to:"
+    say "    $DEST_DIR"
+    printf '\n'
+    say "  Would configure:"
+    if [ -n "$FORCE_SIZE" ]; then dr_size="${FORCE_SIZE}px"; else dr_size="${RECOMMENDED}px by default (or pick one with --size N)"; fi
+    printf '    %-14s %s\n' "Hyprcursor" "$THEME_NAME @ $dr_size"
+    [ "$HAS_UWSM" = 1 ]      && printf '    %-14s %s\n' "UWSM" "environment persistence"
+    [ "$HAS_HYPR_CONF" = 1 ] && printf '    %-14s %s\n' "hyprland.conf" "environment persistence"
+    [ "$HAS_HYPR_LUA" = 1 ]  && printf '    %-14s %s\n' "Lua wrapper" "environment persistence"
+    if [ "$NO_GTK" = 0 ]; then printf '    %-14s %s\n' "GTK" "settings.ini + gsettings"; else printf '    %-14s %s\n' "GTK" "skipped (--no-gtk)"; fi
+    printf '\n'
+    say "  No files were changed."
     exit 0
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Install the theme files (safe: doesn't change what's active yet)
+# 3. Install the theme files (safe: doesn't change what's active yet).
+#    Done now, silently -- it has to happen before the size wizard below so
+#    hyprctl has something to preview, but we report it later as part of the
+#    "Installing Brushbuddy..." checklist so the flow reads top-to-bottom.
 # ---------------------------------------------------------------------------
 mkdir -p "$(dirname "$DEST_DIR")"
 rm -rf "$DEST_DIR"
 cp -a "$THEME_SRC" "$DEST_DIR"
-ok "Cursor theme copied to $DEST_DIR"
 
-# Revert live cursor on any abnormal exit before the user has confirmed a size.
+# Revert live cursor AND remove the just-copied theme dir on any abnormal
+# exit before the user has confirmed a size -- otherwise a cancelled wizard
+# (or a crash) leaves Brushbuddy-Bibata sitting in ~/.local/share/icons with
+# no install-state to match it, which then makes uninstall.sh unable to find
+# anything to restore.
 CONFIRMED=0
 cleanup() {
     if [ "$CONFIRMED" != 1 ]; then
         hyprctl setcursor "$PREV_HYPRCURSOR_THEME" "$PREV_HYPRCURSOR_SIZE" >/dev/null 2>&1 || true
+        rm -rf "$DEST_DIR"
     fi
 }
 trap cleanup EXIT INT TERM
@@ -187,6 +271,9 @@ trap cleanup EXIT INT TERM
 # ---------------------------------------------------------------------------
 # 4. Choose a size -- live-tested, one at a time, wait for explicit approval
 # ---------------------------------------------------------------------------
+rule
+printf '\n'
+
 if [ -n "$FORCE_SIZE" ]; then
     valid=0
     for s in "${SIZES[@]}"; do [ "$s" = "$FORCE_SIZE" ] && valid=1; done
@@ -196,44 +283,74 @@ if [ -n "$FORCE_SIZE" ]; then
     fi
     CHOSEN_SIZE="$FORCE_SIZE"
     hyprctl setcursor "$THEME_NAME" "$CHOSEN_SIZE" >/dev/null 2>&1
-    ok "Installed at ${CHOSEN_SIZE}px (--size flag, wizard skipped)"
+    say "  Skipping the size wizard -- installing at ${CHOSEN_SIZE}px (--size)"
 else
+    say "  Pick your Brushbuddy size"
     idx=1
     for i in "${!SIZES[@]}"; do
         [ "${SIZES[$i]}" = "$RECOMMENDED" ] && idx=$((i+1))
     done
     CHOSEN_SIZE=""
+    first_try=1
     while [ -z "$CHOSEN_SIZE" ]; do
         cur="${SIZES[$((idx-1))]}"
         hyprctl setcursor "$THEME_NAME" "$cur" >/dev/null 2>&1
-        say ""
-        say "Trying size: ${cur}px$( [ "$cur" = "$RECOMMENDED" ] && echo ' (recommended)' )"
-        warn "Move your mouse now to see it -- Hyprland only redraws the cursor on movement."
-        read -r -p "Happy with this size? [Y]es / [b]igger / [s]maller / [l]ist / [q]uit: " ans
+        printf '\n'
+        if [ "$cur" = "$RECOMMENDED" ]; then
+            printf '  Trying %s%spx%s  %s★ recommended%s\n' "$C_CYAN" "$cur" "$C_RESET" "$C_DIM" "$C_RESET"
+        else
+            printf '  Trying %s%spx%s\n' "$C_CYAN" "$cur" "$C_RESET"
+        fi
+        printf '\n'
+        if [ "$first_try" = 1 ]; then
+            warn "Give Brushbuddy a little wiggle."
+            say  "    Hyprland may not redraw the cursor until it moves."
+            first_try=0
+        else
+            warn "Give Brushbuddy a little wiggle."
+        fi
+        printf '\n'
+        say "  [Enter/Y] Keep it    [B] Bigger    [S] Smaller"
+        say "  [L] All sizes        [Q] Cancel"
+        printf '\n'
+        read -r -p "› " ans
         case "${ans:-y}" in
             y|Y|"") CHOSEN_SIZE="$cur" ;;
             b|B) [ "$idx" -lt "${#SIZES[@]}" ] && idx=$((idx+1)) || warn "Already at the largest tested size (${SIZES[-1]}px)." ;;
             s|S) [ "$idx" -gt 1 ] && idx=$((idx-1)) || warn "Already at the smallest tested size (${SIZES[0]}px)." ;;
             l|L)
-                say "Sizes: $(for i in "${!SIZES[@]}"; do printf '%d)%s ' "$((i+1))" "${SIZES[$i]}"; done)"
-                read -r -p "Pick a number: " pick
+                printf '\n'
+                say "  Available sizes"
+                printf '\n'
+                for i in "${!SIZES[@]}"; do
+                    sz="${SIZES[$i]}"
+                    label="$(size_label "$sz")"
+                    marker=" "
+                    [ "$((i+1))" = "$idx" ] && marker="${C_CYAN}›${C_RESET}"
+                    printf '  %s %3spx   %s\n' "$marker" "$sz" "$label"
+                done
+                printf '\n'
+                read -r -p "  Pick a number [1-${#SIZES[@]}]: " pick
                 if [ "$pick" -ge 1 ] 2>/dev/null && [ "$pick" -le "${#SIZES[@]}" ] 2>/dev/null; then
                     idx="$pick"
                 else
                     warn "Not a valid choice."
                 fi
                 ;;
-            q|Q) say "Cancelled -- reverting to your previous cursor."; exit 130 ;;
-            *) warn "Didn't understand that, try y/b/s/l/q." ;;
+            q|Q) say "  Cancelled -- reverting to your previous cursor."; exit 130 ;;
+            *) warn "Didn't understand that -- try Enter, B, S, L, or Q." ;;
         esac
     done
-    ok "Locked in ${CHOSEN_SIZE}px"
+    printf '\n'
+    ok "${CHOSEN_SIZE}px looks good. Locking it in."
 fi
 
 CONFIRMED=1
 
 # ---------------------------------------------------------------------------
-# 5. Persist configuration
+# 5. Persist configuration (same detection/backup/write logic as before --
+#    only the messages below it changed. See docs/CHANGELOG.md v0.9 for why
+#    every one of these paths exists.)
 # ---------------------------------------------------------------------------
 mkdir -p "$STATE_DIR/backups"
 {
@@ -248,15 +365,16 @@ mkdir -p "$STATE_DIR/backups"
     echo "HYPR_LUA_CONFIGURED=$HAS_HYPR_LUA"
     echo "INSTALLED_SIZE=$CHOSEN_SIZE"
 } > "$STATE_FILE"
+
+BACKED_UP_MSG="Previous cursor backed up"
 if [ "$REUSE_BACKUP" = 1 ]; then
-    ok "Original pre-Brushbuddy backup preserved (not overwritten)"
+    BACKED_UP_MSG="Original cursor backup preserved"
 else
-    [ "$HAS_UWSM" = 1 ] && cp "$UWSM_ENV" "$STATE_DIR/backups/uwsm-env.bak"
-    [ "$HAS_GTK3" = 1 ] && cp "$GTK3_INI" "$STATE_DIR/backups/gtk3-settings.ini.bak"
-    [ "$HAS_GTK4" = 1 ] && cp "$GTK4_INI" "$STATE_DIR/backups/gtk4-settings.ini.bak"
+    [ "$HAS_UWSM" = 1 ]      && cp "$UWSM_ENV" "$STATE_DIR/backups/uwsm-env.bak"
+    [ "$HAS_GTK3" = 1 ]      && cp "$GTK3_INI" "$STATE_DIR/backups/gtk3-settings.ini.bak"
+    [ "$HAS_GTK4" = 1 ]      && cp "$GTK4_INI" "$STATE_DIR/backups/gtk4-settings.ini.bak"
     [ "$HAS_HYPR_CONF" = 1 ] && cp "$HYPR_CONF" "$STATE_DIR/backups/hyprland-conf.bak"
-    [ "$HAS_HYPR_LUA" = 1 ] && cp "$HYPR_LUA_ENV" "$STATE_DIR/backups/environment-lua.bak"
-    ok "Previous cursor settings backed up to $STATE_DIR"
+    [ "$HAS_HYPR_LUA" = 1 ]  && cp "$HYPR_LUA_ENV" "$STATE_DIR/backups/environment-lua.bak"
 fi
 
 if [ "$HAS_UWSM" = 1 ]; then
@@ -280,7 +398,6 @@ if [ "$HAS_UWSM" = 1 ]; then
     else
         echo "export XCURSOR_SIZE=$CHOSEN_SIZE" >> "$UWSM_ENV"
     fi
-    ok "Hyprland (UWSM) environment configured"
 fi
 
 # Classic hyprland.conf (non-UWSM sessions) and CachyOS's Lua config wrapper
@@ -299,7 +416,6 @@ if [ "$HAS_HYPR_CONF" = 1 ]; then
         echo "env = XCURSOR_THEME,$THEME_NAME"
         echo "env = XCURSOR_SIZE,$CHOSEN_SIZE"
     } >> "$HYPR_CONF"
-    ok "Classic hyprland.conf configured"
 fi
 
 if [ "$HAS_HYPR_LUA" = 1 ]; then
@@ -311,18 +427,12 @@ if [ "$HAS_HYPR_LUA" = 1 ]; then
         echo "hl.env(\"XCURSOR_THEME\", \"$THEME_NAME\")"
         echo "hl.env(\"XCURSOR_SIZE\", \"$CHOSEN_SIZE\")"
     } >> "$HYPR_LUA_ENV"
-    ok "CachyOS Lua config wrapper configured"
 fi
 
-if [ "$HAS_UWSM" != 1 ] && [ "$HAS_HYPR_CONF" != 1 ] && [ "$HAS_HYPR_LUA" != 1 ]; then
-    warn "No UWSM env, hyprland.conf, or Lua config wrapper found. Add these to"
-    warn "your Hyprland startup config manually, or the theme won't survive a reboot:"
-    say "    env = HYPRCURSOR_THEME,$THEME_NAME"
-    say "    env = HYPRCURSOR_SIZE,$CHOSEN_SIZE"
-    say "    env = XCURSOR_THEME,$THEME_NAME"
-    say "    env = XCURSOR_SIZE,$CHOSEN_SIZE"
-fi
+HYPR_CONFIGURED=0
+[ "$HAS_UWSM" = 1 ] || [ "$HAS_HYPR_CONF" = 1 ] || [ "$HAS_HYPR_LUA" = 1 ] && HYPR_CONFIGURED=1
 
+GTK_DONE=0
 if [ "$NO_GTK" != 1 ]; then
     if [ "$HAS_GTK3" = 1 ]; then
         sed -i "s/^gtk-cursor-theme-name=.*/gtk-cursor-theme-name=$THEME_NAME/" "$GTK3_INI"
@@ -336,28 +446,75 @@ if [ "$NO_GTK" != 1 ]; then
         gsettings set org.gnome.desktop.interface cursor-theme "$THEME_NAME" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface cursor-size "$CHOSEN_SIZE" 2>/dev/null || true
     fi
-    ok "GTK configured"
-else
-    warn "Skipped GTK configuration (--no-gtk)"
+    { [ "$HAS_GTK3" = 1 ] || [ "$HAS_GTK4" = 1 ] || [ "$HAS_GSETTINGS" = 1 ]; } && GTK_DONE=1
 fi
 
+FLATPAK_RESULT=""
 if [ "$FLATPAK_SUPPORT" = 1 ] && [ "$HAS_FLATPAK" = 1 ]; then
-    flatpak override --user --filesystem="$HOME/.local/share/icons:ro" 2>/dev/null \
-        && ok "Flatpak apps granted read access to ~/.local/share/icons" \
-        || warn "Could not set Flatpak override -- you may need to run this manually"
+    if flatpak override --user --filesystem="$HOME/.local/share/icons:ro" 2>/dev/null; then
+        FLATPAK_RESULT="ok"
+    else
+        FLATPAK_RESULT="warn"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
-# 6. Apply live
+# 6. Apply live, then show the checklist -- everything above already
+#    happened; this just reports it in a sensible, fixed order.
 # ---------------------------------------------------------------------------
 systemctl --user set-environment \
     XCURSOR_THEME="$THEME_NAME" XCURSOR_SIZE="$CHOSEN_SIZE" \
     HYPRCURSOR_THEME="$THEME_NAME" HYPRCURSOR_SIZE="$CHOSEN_SIZE" 2>/dev/null || true
 hyprctl setcursor "$THEME_NAME" "$CHOSEN_SIZE" >/dev/null 2>&1
-ok "Current session updated"
 
-say ""
-say "Brushbuddy installed successfully 🧙"
-say ""
-say "Move your mouse to refresh the cursor."
-say "Not happy with it? Run ./uninstall.sh to restore your previous cursor."
+printf '\n'
+rule
+printf '\n'
+say "  Installing Brushbuddy..."
+printf '\n'
+
+ok "$BACKED_UP_MSG"
+[ "$REUSE_BACKUP" != 1 ] && detail "$STATE_DIR"
+
+ok "Theme installed"
+detail "$DEST_DIR"
+
+if [ "$HYPR_CONFIGURED" = 1 ]; then
+    ok "Hyprland configured"
+    [ "$HAS_UWSM" = 1 ]      && detail "$UWSM_ENV"
+    [ "$HAS_HYPR_CONF" = 1 ] && detail "$HYPR_CONF"
+    [ "$HAS_HYPR_LUA" = 1 ]  && detail "$HYPR_LUA_ENV"
+fi
+
+if [ "$NO_GTK" = 1 ]; then
+    warn "Skipped GTK configuration (--no-gtk)"
+elif [ "$GTK_DONE" = 1 ]; then
+    ok "GTK configured"
+fi
+
+[ "$FLATPAK_RESULT" = "ok" ]   && ok "Flatpak apps granted access"
+[ "$FLATPAK_RESULT" = "warn" ] && warn "Could not set Flatpak override -- you may need to run this manually"
+
+ok "Current session updated"
+[ "$HYPR_CONFIGURED" = 1 ] && ok "Reboot persistence enabled"
+
+# ---------------------------------------------------------------------------
+# 7. Success
+# ---------------------------------------------------------------------------
+printf '\n'
+printf '  ╭────────────────────────────────────────────────╮\n'
+printf '  │                                                │\n'
+printf '  │        %s%sBrushbuddy is now following you.%s        │\n' "$C_BOLD" "$C_TITLE" "$C_RESET"
+printf '  │                                                │\n'
+printf '  │                       🧙                       │\n'
+printf '  │                                                │\n'
+printf '  ╰────────────────────────────────────────────────╯\n'
+printf '\n'
+printf '  Theme   %s\n' "$THEME_NAME"
+printf '  Size    %s%spx%s\n' "$C_CYAN" "$CHOSEN_SIZE" "$C_RESET"
+printf '  Base    Bibata-Modern-Ice\n'
+printf '\n'
+say "  Wiggle your mouse if the little guy hasn't appeared yet."
+printf '\n'
+say "  To send him home:"
+say "    ./uninstall.sh"

@@ -12,11 +12,33 @@ HYPR_LUA_ENV="$HOME/.config/hypr/config/environment.lua"
 GTK3_INI="$HOME/.config/gtk-3.0/settings.ini"
 GTK4_INI="$HOME/.config/gtk-4.0/settings.ini"
 
-ok()   { printf '\033[32m✓\033[0m %s\n' "$1"; }
-warn() { printf '\033[33m⚠\033[0m %s\n' "$1"; }
-err()  { printf '\033[31m✗\033[0m %s\n' "$1" >&2; }
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    C_OK=$'\033[32m'; C_WARN=$'\033[33m'; C_ERR=$'\033[31m'; C_RESET=$'\033[0m'
+else
+    C_OK=""; C_WARN=""; C_ERR=""; C_RESET=""
+fi
+
+say()  { printf '%s\n' "$1"; }
+ok()   { printf '  %s✓%s %s\n' "$C_OK" "$C_RESET" "$1"; }
+warn() { printf '  %s⚠%s %s\n' "$C_WARN" "$C_RESET" "$1"; }
+err()  { printf '  %s✗%s %s\n' "$C_ERR" "$C_RESET" "$1" >&2; }
 
 if [ ! -f "$STATE_FILE" ]; then
+    if [ -d "$DEST_DIR" ]; then
+        # install.sh copies theme files before the size wizard runs, so a
+        # cancelled/interrupted install can leave them behind with nothing
+        # recorded in install-state. Nothing to restore in that case -- the
+        # cursor was never actually switched -- but the leftover files are
+        # safe to clean up.
+        warn "No install-state found -- looks like a previous install was"
+        warn "cancelled before it finished. Your cursor was never actually"
+        warn "switched, but leftover Brushbuddy files were found."
+        rm -rf "$DEST_DIR"
+        ok "Leftover Brushbuddy files removed"
+        printf '\n'
+        say "Nothing else to restore. You're already on your normal cursor."
+        exit 0
+    fi
     err "No install-state found at $STATE_FILE -- was Brushbuddy installed with install.sh?"
     err "If you installed it manually, you'll need to restore your old cursor theme by hand."
     exit 1
@@ -24,24 +46,25 @@ fi
 # shellcheck disable=SC1090
 source "$STATE_FILE"
 
-echo "Restoring previous cursor:"
-echo "  $PREVIOUS_HYPRCURSOR_THEME @ ${PREVIOUS_HYPRCURSOR_SIZE}px"
-echo ""
+say "Restoring your previous cursor..."
+printf '\n'
+say "  $PREVIOUS_HYPRCURSOR_THEME @ ${PREVIOUS_HYPRCURSOR_SIZE}px"
+printf '\n'
 
+HYPR_RESTORED=0
 if [ -f "$STATE_DIR/backups/uwsm-env.bak" ] && [ -f "$UWSM_ENV" ]; then
     cp "$STATE_DIR/backups/uwsm-env.bak" "$UWSM_ENV"
-    ok "Hyprland (UWSM) environment restored"
+    HYPR_RESTORED=1
 fi
-
 if [ "${HYPR_CONF_CONFIGURED:-0}" = 1 ] && [ -f "$STATE_DIR/backups/hyprland-conf.bak" ] && [ -f "$HYPR_CONF" ]; then
     cp "$STATE_DIR/backups/hyprland-conf.bak" "$HYPR_CONF"
-    ok "Classic hyprland.conf restored"
+    HYPR_RESTORED=1
 fi
-
 if [ "${HYPR_LUA_CONFIGURED:-0}" = 1 ] && [ -f "$STATE_DIR/backups/environment-lua.bak" ] && [ -f "$HYPR_LUA_ENV" ]; then
     cp "$STATE_DIR/backups/environment-lua.bak" "$HYPR_LUA_ENV"
-    ok "CachyOS Lua config wrapper restored"
+    HYPR_RESTORED=1
 fi
+[ "$HYPR_RESTORED" = 1 ] && ok "Hyprland restored"
 
 if [ "${GTK_CONFIGURED:-0}" = 1 ]; then
     [ -f "$STATE_DIR/backups/gtk3-settings.ini.bak" ] && [ -f "$GTK3_INI" ] && \
@@ -75,5 +98,6 @@ fi
 rm -f "$STATE_FILE"
 rm -rf "$STATE_DIR/backups"
 
-echo ""
-echo "Move your mouse to see your previous cursor again."
+printf '\n'
+say "Back to normal. Brushbuddy has gone home."
+say "(Move your mouse if the old cursor doesn't show up right away.)"

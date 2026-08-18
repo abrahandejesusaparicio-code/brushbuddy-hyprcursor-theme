@@ -156,6 +156,17 @@ See `docs/FORMAT_NOTES.md`.
 - Reverse-engineering the hyprcursor format, the installer/uninstaller, and a
   lot of very patient live testing: ABE
 
+## License
+
+This repo is licensed under [GPL-3.0](LICENSE). That's inherited, not a free
+choice: the shipped theme merges Brushbuddy's shapes into a
+[Bibata-Modern-Ice](https://github.com/ful1e5/Bibata_Cursor) base, and Bibata
+is GPL-3.0 licensed, so anything built on it has to carry the same license
+forward. The Brushbuddy cursor art itself stays credited to
+[Korada_art](https://www.instagram.com/korada_art) as above — the license
+covers this repo's tooling and the compiled theme, not a transfer of the
+artwork's authorship.
+
 ## Found a bug?
 
 `docs/CHANGELOG.md` is basically a bug diary already — cursors gone

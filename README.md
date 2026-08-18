@@ -40,6 +40,10 @@ See it animated in motion: [showcase reel on Instagram](https://www.instagram.co
    ./install.sh
    ```
 
+Already cloned it before? Step 1 will fail since git won't overwrite an
+existing folder -- `cd brushbuddy-hyprcursor-theme && git pull` instead to
+grab the latest changes.
+
 The installer:
 - Detects your environment (Hyprland, GTK 3/4, UWSM, classic `hyprland.conf`,
   CachyOS's Lua config wrapper, gsettings, Flatpak) and tells you what it

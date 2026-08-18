@@ -50,8 +50,12 @@ cd brushbuddy-hyprcursor-theme
 ```bash
 git pull
 ```
+Then run the installer:
+```bash
+./install.sh
+```
 
-(Two separate commands on purpose -- copy one line at a time. A single
+(Separate commands on purpose -- copy one line at a time. A single
 `cmd1 && cmd2` line is an easy thing to accidentally copy half of.)
 
 The installer:

@@ -142,7 +142,4 @@ See `docs/FORMAT_NOTES.md`.
 
 - Source cursor art: "Brushbuddy", a *Witch Hat Atelier*-themed Windows
   cursor pack (`.cur`/`.ani`), by [Korada_art](https://www.instagram.com/korada_art)
-- Format reverse-engineering, `.ani` parsing, and machine-specific testing: Claude (Anthropic)
 - hyprcursor tooling (`patch_bibata.py`, `validate_theme.py`, size-ladder fix,
-  installer design): Delamain (ChatGPT)
-- Testing, verification, and final calls on every live cursor swap: Ace

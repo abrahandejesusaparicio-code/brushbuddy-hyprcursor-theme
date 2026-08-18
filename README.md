@@ -10,12 +10,12 @@ wait/loading, and all 12 resize-direction cursors are replaced — everything
 else (text cursor, crosshair, etc.) stays exactly as Bibata ships it.
 
 
-**Status: v0.9** — all 18 shapes confirmed working at multiple cursor sizes,
-a self-contained installer/uninstaller with rollback, and the cursor theme
-now survives a reboot on every Hyprland session-launch method (UWSM,
-classic `hyprland.conf`, and CachyOS's Lua config wrapper). See
-`docs/CHANGELOG.md` for the full debugging journey (there were some real
-bugs along the way, documented rather than hidden).
+**Status: v0.10** — all 18 shapes confirmed working at multiple cursor
+sizes, a polished installer/uninstaller with rollback, and the cursor theme
+survives a reboot on every Hyprland session-launch method (UWSM, classic
+`hyprland.conf`, and CachyOS's Lua config wrapper). See `docs/CHANGELOG.md`
+for the full debugging journey (there were some real bugs along the way,
+documented rather than hidden).
 
 ## Preview
 

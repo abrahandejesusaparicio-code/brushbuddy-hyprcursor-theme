@@ -181,3 +181,48 @@ persistence path found, here's what to add by hand" fallback now only
 triggers if *none* of UWSM env, `hyprland.conf`, or the Lua wrapper exist.
 Verified fixed on the machine that originally hit the bug (CachyOS, Lua
 config wrapper, no UWSM): cursor now stays set across a full power off/on.
+
+## v0.10 — friendlier installer UI + two real bugs found while testing it
+
+The installer worked but read like a technically-correct shell script, not
+something anyone actually designed. Rewrote the presentation layer only
+(branding header, compact grouped environment detection instead of a wall of
+✓/✗ lines, a redesigned size wizard where Enter means "keep it," a labeled
+`[L]` size list, a single "Installing Brushbuddy..." checklist instead of
+messages interleaved with detection output, a boxed success screen, and a
+new `--verbose` flag for anyone who wants exact file paths). Detection,
+backup, and persistence logic is untouched -- same brain, nicer face.
+
+Testing that surfaced two real bugs, both now fixed:
+
+1. **Cancelling the size wizard left orphaned files.** `install.sh` copies
+   the theme to `~/.local/share/icons/` *before* the size wizard runs (it
+   needs the files on disk for the live `hyprctl setcursor` preview), but if
+   the wizard was quit or interrupted before a size was confirmed, nothing
+   ever cleaned that copy up, and `install-state` was never written. Running
+   `uninstall.sh` afterward found no state to restore from and just gave up
+   -- even though the cursor itself was never actually switched. `cleanup()`
+   now removes the orphaned theme dir on any unconfirmed exit, and
+   `uninstall.sh` gained a fallback: if there's no state file but leftover
+   theme files exist, it cleans them up and says so, instead of dead-ending.
+
+2. **`detect_current()` trusted the wrong source for "what was installed
+   before."** It checked the live process/systemd environment first, and
+   the UWSM env file only as a fallback. But `install.sh` itself calls
+   `systemctl --user set-environment`, and on at least one machine that
+   value kept showing up in *every new shell's* environment even after
+   `uninstall.sh` had correctly restored the UWSM env file. Result: running
+   `install.sh` again shortly after an `uninstall.sh` could "detect"
+   Brushbuddy-Bibata as the user's own previous theme, corrupting the
+   backup chain into a self-reference (the exact failure mode v0.8's
+   self-reference guard was built to catch -- it did catch it, but only
+   after the chain was already broken). Fixed by checking the UWSM env file
+   first and falling back to the live environment only when there's no file
+   to check -- the file is what actually persists across a reboot, so it's
+   the correct source of truth. Reproduced on this repo's own dev machine
+   with an install → uninstall → install → uninstall cycle, confirmed fixed
+   the same way.
+
+Also added a `LICENSE` (GPL-3.0): the shipped theme is a derivative of
+Bibata-Modern-Ice, which is GPL-3.0, so this repo has to carry the same
+license forward -- not a free choice, an inherited one.

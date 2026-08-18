@@ -28,7 +28,7 @@ See it animated in motion: [showcase reel on Instagram](https://www.instagram.co
 ## Install
 
 ```bash
-git clone <this repo>
+git clone https://github.com/abrahandejesusaparicio-code/brushbuddy-hyprcursor-theme.git
 cd brushbuddy-hyprcursor-theme
 ./install.sh
 ```

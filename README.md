@@ -40,9 +40,19 @@ See it animated in motion: [showcase reel on Instagram](https://www.instagram.co
    ./install.sh
    ```
 
-Already cloned it before? Step 1 will fail since git won't overwrite an
-existing folder -- `cd brushbuddy-hyprcursor-theme && git pull` instead to
-grab the latest changes.
+**Already cloned it before?** Step 1 will fail with `already exists and is
+not an empty directory` -- git won't overwrite an existing folder. Skip
+straight to grabbing the latest changes instead:
+
+```bash
+cd brushbuddy-hyprcursor-theme
+```
+```bash
+git pull
+```
+
+(Two separate commands on purpose -- copy one line at a time. A single
+`cmd1 && cmd2` line is an easy thing to accidentally copy half of.)
 
 The installer:
 - Detects your environment (Hyprland, GTK 3/4, UWSM, classic `hyprland.conf`,

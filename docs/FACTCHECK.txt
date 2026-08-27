@@ -21,3 +21,40 @@ Hotspot policy in this kit:
 
 Those hotspot values are VISUAL STARTING GUESSES, not recovered source metadata.
 The source metadata does not contain trustworthy hotspots.
+
+v0.11 source inspection (Korada_art's second art drop)
+========================================================
+
+ANI files (originals/animated/), all 256x256, same RIFF/ACON + embedded-PNG
+CUR-record format as the original three:
+- move: 6 embedded frames, per-frame rate chunk present -- NOT uniform,
+  converted delays=[283,83,117,83,117,83] ms
+- text (hover): 15 embedded frames, default JifRate=5, converted delays=[83]*15 ms
+- resize_h (horizontal): 4 embedded frames, per-frame rate chunk present,
+  converted delays=[83,33,83,33] ms
+- resize_v (vertical): 4 embedded frames, same rate pattern as resize_h
+- resize_diag1 (NWSE, body angled top-left to bottom-right): 4 embedded
+  frames, same rate pattern as resize_h
+- resize_diag2 (NESW, body angled top-right to bottom-left): 4 embedded
+  frames, same rate pattern as resize_h
+
+classic/pointer/wait were re-supplied alongside this drop too -- byte-
+different from the original three files (different PNG re-encode) but
+identical frame counts and timing (7@117ms / 2@83ms / 46@83ms), confirmed
+visually identical frame-by-frame. Treated as the same art, just a fresher
+export; the old originals/ files were retired in favor of these.
+
+originals/static/ (9 files, one per shape): despite the name, these are
+also RIFF/ACON .ani, not .cur -- each is a single-frame (cFrames=1) idle
+pose. Not used by the build pipeline (extract_ani.py / patch_bibata.py both
+read from originals/animated/ only) -- kept as archival reference from
+Korada_art, same as the original three .cur files were.
+
+Hotspot policy for the 6 new categories: all six start at geometric center
+(0.5, 0.5), matching how `wait` was already handled -- these are, like the
+original three, VISUAL STARTING GUESSES. Unlike classic/pointer (tuned in
+v0.6 via live crosshair-overlay testing), the v0.11 rebuild session could
+not visually confirm on-screen rendering at all -- see the CHANGELOG v0.11
+entry for why (screenshot tooling can't see Hyprland's hardware cursor
+plane). Worth a live look and possible hotspot nudge before treating these
+as final.

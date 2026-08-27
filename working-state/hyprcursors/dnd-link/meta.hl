@@ -1,0 +1,20 @@
+resize_algorithm = none
+hotspot_x = 0.38
+hotspot_y = 0.25
+
+define_size = 16, dnd-link_000.png, 40
+define_size = 20, dnd-link_001.png, 40
+define_size = 22, dnd-link_002.png, 40
+define_size = 24, dnd-link_003.png, 40
+define_size = 28, dnd-link_004.png, 40
+define_size = 32, dnd-link_005.png, 40
+define_size = 40, dnd-link_006.png, 40
+define_size = 48, dnd-link_007.png, 40
+define_size = 56, dnd-link_008.png, 40
+define_size = 64, dnd-link_009.png, 40
+define_size = 72, dnd-link_010.png, 40
+define_size = 80, dnd-link_011.png, 40
+define_size = 88, dnd-link_012.png, 40
+define_size = 96, dnd-link_013.png, 40
+
+define_override = alias

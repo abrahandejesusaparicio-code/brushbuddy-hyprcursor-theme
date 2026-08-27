@@ -1,0 +1,19 @@
+resize_algorithm = none
+hotspot_x = 0.38
+hotspot_y = 0.25
+
+define_size = 16, dnd-copy_000.png, 40
+define_size = 20, dnd-copy_001.png, 40
+define_size = 22, dnd-copy_002.png, 40
+define_size = 24, dnd-copy_003.png, 40
+define_size = 28, dnd-copy_004.png, 40
+define_size = 32, dnd-copy_005.png, 40
+define_size = 40, dnd-copy_006.png, 40
+define_size = 48, dnd-copy_007.png, 40
+define_size = 56, dnd-copy_008.png, 40
+define_size = 64, dnd-copy_009.png, 40
+define_size = 72, dnd-copy_010.png, 40
+define_size = 80, dnd-copy_011.png, 40
+define_size = 88, dnd-copy_012.png, 40
+define_size = 96, dnd-copy_013.png, 40
+

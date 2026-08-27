@@ -2,11 +2,13 @@
 """
 Create a PATCHED COPY of an extracted Bibata hyprcursor working-state tree.
 
-V5 policy:
+V6 policy:
 - preserve the five proven meta.hl keys
 - provide explicit raster anchors at 24/32/48/64/96/256
 - preserve Bibata directory names and define_override aliases
-- patch classic, pointer, wait, and 12 resize-pointer shapes
+- patch classic, pointer, wait, move, text, and the 12 resize-direction
+  shapes split into 4 real directional categories (no more one animation
+  shared across all 12 -- each direction has its own Brushbuddy art)
 - never modify the input tree
 - dry-run by default
 """
@@ -20,36 +22,62 @@ EXTRACTED = KIT / "extracted"
 ALIASES = {
     "classic": {"left_ptr","default","arrow","top_left_arrow"},
     "pointer": {"pointer","hand","hand1","hand2","link","pointing_hand"},
-    "resize_pointer": {
-        "top_side",
-        "bottom_side",
-        "left_side",
-        "right_side",
-        "top_left_corner",
-        "top_right_corner",
-        "bottom_left_corner",
-        "bottom_right_corner",
-        "fd_double_arrow",
-        "bd_double_arrow",
-        "sb_h_double_arrow",
-        "sb_v_double_arrow",
-    },
+    "resize_h": {"left_side","right_side","sb_h_double_arrow"},
+    "resize_v": {"top_side","bottom_side","sb_v_double_arrow"},
+    "resize_diag1": {"top_left_corner","bottom_right_corner","fd_double_arrow"},
+    "resize_diag2": {"top_right_corner","bottom_left_corner","bd_double_arrow"},
+    "move": {"move","pointer-move","grabbing"},
+    "text": {"xterm","text","vertical-text"},
     "wait": {"wait","watch","progress","left_ptr_watch","half-busy"},
 }
 
 HOTSPOTS = {
     "classic": ("0.4688","0.4063"),
     "pointer": ("0.4570","0.3906"),
-    "resize_pointer": ("0.4570","0.3906"),
+    "resize_h": ("0.5","0.5"),
+    "resize_v": ("0.5","0.5"),
+    "resize_diag1": ("0.5","0.5"),
+    "resize_diag2": ("0.5","0.5"),
+    "move": ("0.5","0.5"),
+    "text": ("0.5","0.5"),
     "wait": ("0.5","0.5"),
 }
 
-DELAYS = {"classic":117, "pointer":83, "resize_pointer":83, "wait":83}
-FRAME_COUNTS = {"classic":7, "pointer":2, "resize_pointer":2, "wait":46}
+# A delay may be a single int (same delay for every frame) or a list with
+# one entry per frame -- the resize/move source animations have genuinely
+# uneven per-frame timing (verified against each .ani's own rate chunks),
+# unlike classic/pointer/wait/text which are uniform.
+DELAYS = {
+    "classic": 117,
+    "pointer": 83,
+    "resize_h": [83,33,83,33],
+    "resize_v": [83,33,83,33],
+    "resize_diag1": [83,33,83,33],
+    "resize_diag2": [83,33,83,33],
+    "move": [283,83,117,83,117,83],
+    "text": 83,
+    "wait": 83,
+}
+FRAME_COUNTS = {
+    "classic": 7,
+    "pointer": 2,
+    "resize_h": 4,
+    "resize_v": 4,
+    "resize_diag1": 4,
+    "resize_diag2": 4,
+    "move": 6,
+    "text": 15,
+    "wait": 46,
+}
 SOURCE_KIND = {
     "classic": "classic",
     "pointer": "pointer",
-    "resize_pointer": "pointer",
+    "resize_h": "resize_h",
+    "resize_v": "resize_v",
+    "resize_diag1": "resize_diag1",
+    "resize_diag2": "resize_diag2",
+    "move": "move",
+    "text": "text",
     "wait": "wait",
 }
 SIZES = (24,32,48,64,96,256)
@@ -102,13 +130,15 @@ def write_brushbuddy_shape(target, kind, overrides):
         lines.append(f"define_override = {o}")
 
     source_kind=SOURCE_KIND[kind]
+    delays=DELAYS[kind]
     for size in SIZES:
         for i in range(FRAME_COUNTS[kind]):
             src=EXTRACTED/source_kind/f"frame_{i:03d}.png"
             fn=f"frame_{size}_{i:03d}.png"
             dst=target/fn
             make_size(src,dst,size)
-            lines.append(f"define_size = {size}, {fn}, {DELAYS[kind]}")
+            delay=delays[i] if isinstance(delays,list) else delays
+            lines.append(f"define_size = {size}, {fn}, {delay}")
 
     (target/"meta.hl").write_text("\n".join(lines)+"\n")
 
@@ -129,7 +159,7 @@ shapes_root=src/cdir
 if not shapes_root.is_dir():
     raise SystemExit(f"Missing cursor directory: {shapes_root}")
 
-matches={"classic":[],"pointer":[],"resize_pointer":[],"wait":[]}
+matches={k:[] for k in ALIASES}
 conflicts=[]
 print(f"Bibata source: {src}")
 print(f"cursors_directory: {cdir}")
@@ -154,13 +184,13 @@ if conflicts:
     sys.exit(2)
 
 print("\nSummary:")
-for k in ("classic","pointer","resize_pointer","wait"):
+for k in ALIASES:
     print(f"  {k:14s}: {len(matches[k])} shape(s)")
 
 if not args.apply:
     print("\nDry run only.")
     print("Verify the exact match set against the extracted Bibata tree.")
-    print("Resize directions intentionally share one Brushbuddy animation.")
+    print("Each resize direction now has its own Brushbuddy animation.")
     print("Raster ladder: 24/32/48/64/96/256.")
     sys.exit(0)
 

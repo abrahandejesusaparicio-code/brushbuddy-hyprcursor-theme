@@ -1,0 +1,20 @@
+resize_algorithm = none
+hotspot_x = 0.50
+hotspot_y = 0.50
+
+define_size = 16, tcross_000.png, 40
+define_size = 20, tcross_001.png, 40
+define_size = 22, tcross_002.png, 40
+define_size = 24, tcross_003.png, 40
+define_size = 28, tcross_004.png, 40
+define_size = 32, tcross_005.png, 40
+define_size = 40, tcross_006.png, 40
+define_size = 48, tcross_007.png, 40
+define_size = 56, tcross_008.png, 40
+define_size = 64, tcross_009.png, 40
+define_size = 72, tcross_010.png, 40
+define_size = 80, tcross_011.png, 40
+define_size = 88, tcross_012.png, 40
+define_size = 96, tcross_013.png, 40
+
+define_override = color-picker

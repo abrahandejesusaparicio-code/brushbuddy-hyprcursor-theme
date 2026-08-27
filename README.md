@@ -12,17 +12,25 @@
 A custom animated cursor theme for Hyprland, built from "Brushbuddy" — a
 *Witch Hat Atelier*-themed Windows cursor pack (`.cur`/`.ani`) by
 [Korada_art](https://www.instagram.com/korada_art) — merged into a
-Bibata-Modern-Ice base so only the default pointer, link/hand pointer,
-wait/loading, and all 12 resize-direction cursors are replaced — everything
-else (text cursor, crosshair, etc.) stays exactly as Bibata ships it.
+Bibata-Modern-Ice base so the default pointer, link/hand pointer,
+wait/loading, move/grab, text-select, and all 12 resize-direction cursors
+are replaced — the four resize directions (horizontal, vertical, and both
+diagonals) each get their own distinct Brushbuddy animation now, not one
+shared placeholder. Everything else (crosshair, etc.) stays exactly as
+Bibata ships it.
 
 
-**Status: v0.10** — all 18 shapes confirmed working at multiple cursor
-sizes, a polished installer/uninstaller with rollback, and the cursor theme
-survives a reboot on every Hyprland session-launch method (UWSM, classic
-`hyprland.conf`, and CachyOS's Lua config wrapper). See `docs/CHANGELOG.md`
-for the full debugging journey (there were some real bugs along the way,
-documented rather than hidden).
+**Status: v0.11** — 23 shapes now carry real Brushbuddy art (up from 18 in
+v0.10): the 12 resize-direction cursors are finally 4 real directional
+animations instead of one animation reused everywhere, and move/text-select
+are no longer stock Bibata. Structurally validated (six-size ladder on every
+shape, clean diff against untouched Bibata, all 56 shapes compile without
+error) and every new source frame reviewed by hand against the art -- but
+this pass couldn't visually confirm on-screen rendering (Hyprland draws the
+cursor on a hardware overlay plane that screenshot tools can't see; see
+`docs/CHANGELOG.md`), so give it a quick live look before you call it done.
+See `docs/CHANGELOG.md` for the full debugging journey (there were some real
+bugs along the way, documented rather than hidden).
 
 ## Preview
 
@@ -120,11 +128,15 @@ install.sh          Installer (detection, backup, size wizard, live apply)
 uninstall.sh         Restores your previous cursor and removes Brushbuddy
 release/
   Brushbuddy-Bibata/  Precompiled theme -- what install.sh actually installs
-originals/           The 6 source Windows cursor files (3 static .cur, 3 animated .ani)
-working-state/        Hyprcursor "working-state" source for all 18 patched shapes
-                       (left_ptr, hand1, hand2, link, left_ptr_watch, wait, plus 12
-                       resize-direction shapes) -- each with an explicit six-size
-                       define_size ladder (24/32/48/64/96/256px) per animation frame
+originals/           The 18 source Windows cursor files from Korada_art --
+                       originals/animated/ (9 .ani) + originals/static/ (9 .ani,
+                       single/few-frame variants), one pair per shape
+working-state/        Hyprcursor "working-state" source for all 23 patched shapes
+                       (left_ptr, hand1/hand2/link, left_ptr_watch/wait, move/
+                       pointer-move/grabbing, xterm/vertical-text, plus the 12
+                       resize-direction shapes split into 4 real directional
+                       animations) -- each with an explicit six-size define_size
+                       ladder (24/32/48/64/96/256px) per animation frame
 tools/                 Scripts to rebuild/test/patch the theme from source
 docs/
   FACTCHECK.txt        Raw source-file analysis (frame counts, timing, header quirks)
@@ -142,14 +154,23 @@ Requires `hyprcursor-util` (from the `hyprcursor` package) and Python 3.
 hyprcursor-util --extract ~/.local/share/icons/Bibata-Modern-Ice \
     --output /tmp/bibata-extracted
 
+# 1b. Extract PNG frames from the Korada_art source .ani files -- patch_bibata.py
+#     reads Brushbuddy source frames from its sibling extracted/<kind>/ directories
+python3 tools/extract_ani.py "originals/animated/Classic cursor Brushbuddy.ani" extracted/classic
+python3 tools/extract_ani.py "originals/animated/Link pointer Brushbuddy.ani" extracted/pointer
+python3 tools/extract_ani.py "originals/animated/Loading Brushbuddy.ani" extracted/wait
+python3 tools/extract_ani.py "originals/animated/Move Brushbuddy.ani" extracted/move
+python3 tools/extract_ani.py "originals/animated/Text hover Brushbuddy.ani" extracted/text
+python3 tools/extract_ani.py "originals/animated/Horizontal resize Brushbuddy.ani" extracted/resize_h
+python3 tools/extract_ani.py "originals/animated/Vertical resize Brushbuddy.ani" extracted/resize_v
+python3 tools/extract_ani.py "originals/animated/Diagonal resize1 Brushbuddy.ani" extracted/resize_diag1
+python3 tools/extract_ani.py "originals/animated/Diagonal resize 2 Brushbuddy.ani" extracted/resize_diag2
+
 # 2. Patch a copy with the Brushbuddy shapes from this repo
 python3 tools/patch_bibata.py \
     /tmp/bibata-extracted/extracted_Bibata-Modern-Ice \
     /tmp/Brushbuddy-Bibata-working \
     --apply
-# (patch_bibata.py reads Brushbuddy source frames from its sibling
-#  extracted/{classic,pointer,wait}/ directory -- see tools/patch_bibata.py
-#  header for the exact layout it expects)
 
 # 3. Rename the copy's identity so it doesn't claim to be Bibata
 sed -i 's/^name = .*/name = Brushbuddy-Bibata/' /tmp/Brushbuddy-Bibata-working/manifest.hl

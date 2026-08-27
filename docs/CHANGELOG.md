@@ -226,3 +226,61 @@ Testing that surfaced two real bugs, both now fixed:
 Also added a `LICENSE` (GPL-3.0): the shipped theme is a derivative of
 Bibata-Modern-Ice, which is GPL-3.0, so this repo has to carry the same
 license forward -- not a free choice, an inherited one.
+
+## v0.11 — real resize/move/text art, 18 → 23 patched shapes
+
+Korada_art dropped a second, much bigger art pack: 9 shapes instead of 3
+(classic/link/loading re-supplied unchanged, plus six new ones -- move,
+text hover, and horizontal/vertical/diagonal×2 resize). Since v0.6, all 12
+resize-direction cursors had been faking it by reusing the 2-frame pointer
+animation ("directional distinction is gone" -- a deliberate, documented
+tradeoff at the time), and `move`/`text` shipped as untouched stock Bibata
+because no Brushbuddy art existed for them. This version removes both
+limitations.
+
+`originals/` reorganized into `originals/animated/` (9 files, what the
+build actually reads) and `originals/static/` (9 single-frame idle-pose
+`.ani` files -- despite the name, not `.cur` -- kept as archival reference,
+not fed into the pipeline; see `docs/FACTCHECK.txt`).
+
+`tools/patch_bibata.py` split the old single `resize_pointer` catch-all
+into four real categories (`resize_h`, `resize_v`, `resize_diag1` for
+NWSE/↖↘, `resize_diag2` for NESW/↗↙ -- orientation confirmed by extracting
+and eyeballing the actual frames, not guessed) and added `move` and `text`
+categories, matched against Bibata's real shape directories (`move`,
+`pointer-move`, `grabbing` / `xterm`, `text`, `vertical-text`). Also had to
+teach it that a `DELAYS[kind]` entry can be a per-frame list instead of one
+constant: unlike classic/pointer/wait/text, four of the six new source
+animations have genuinely uneven frame timing (resize shapes step
+83/33/83/33ms, move steps 283/83/117/83/117/83ms) -- a single averaged
+delay would have flattened the authored motion. Dry run against a fresh
+Bibata extraction detected all 23 target shapes with zero category
+conflicts and zero missing-shape warnings on the first attempt; compiled
+clean (56 shapes total, only the 23 patched dirs + `manifest.hl` differ
+from an untouched Bibata extraction).
+
+Hotspots for all six new categories start at geometric center (0.5, 0.5),
+same convention as `wait` -- explicitly a starting guess, not a tuned
+value (see `docs/FACTCHECK.txt`).
+
+**Live visual verification hit a wall this session.** The usual process
+(switch theme, move the mouse, look) needs a human actually looking at the
+screen. Attempting it via automated screenshot (`grim`, after a real
+`hyprctl setcursor` swap and synthetic mouse movement via `ydotool`) came
+back with the cursor completely invisible in every capture, across three
+different hover targets -- because Hyprland renders the cursor sprite on a
+hardware overlay plane that screenshot tools compositing from the
+framebuffer don't see. This isn't a theme bug; it's a blind spot in the
+verification method. What *is* confirmed: `hyprctl setcursor` accepted the
+new theme and reverted cleanly, `validate_theme.py` passes, the diff
+against untouched Bibata is exactly the 23 intended directories, and every
+new source frame was reviewed by hand for correct art/orientation before
+the resize-direction mapping was written. What's *not* confirmed: how any
+of the 6 new shapes actually look and feel live on screen, hotspot
+placement included. Do a live pass before calling this final.
+
+`README.md` updated: intro paragraph no longer claims resize directions
+share one animation or that move/text stay stock Bibata; status line bumped
+to v0.11 with the 18→23 shape count and the live-verification caveat above;
+repo layout section reflects the `originals/animated/` + `originals/static/`
+split and the four real resize categories.

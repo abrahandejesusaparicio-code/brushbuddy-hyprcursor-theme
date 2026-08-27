@@ -38,7 +38,7 @@ bugs along the way, documented rather than hidden).
   <img src="docs/images/cursor-preview.png" alt="All 9 Brushbuddy shapes: pointer, link/hand, loading, move, text select, and the 4 resize directions" width="520">
 </p>
 
-See it animated in motion: [showcase reel on Instagram](https://www.instagram.com/reel/Db_eJl7t76R/).
+See it animated in motion: [showcase reel on Instagram](https://www.instagram.com/reel/DcVwALDtKZM/).
 
 ## Install
 
